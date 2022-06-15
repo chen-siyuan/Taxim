@@ -8,26 +8,31 @@ from scipy import interpolate
 from Basics.sensorParams import D, PPMM
 from compose.superposition import SuperPosition
 
+
 VERTICES_START = 10  # vertices start at line 11 in ply file
 Z_THRESHOLD = 0.2  # lower bound for masking objects
 
 
 def press_object(object_path, dome_map, press_depth):
     """
-    Calculates the contact mask and the raw deformations after pressing the object on the gelpad
+    Calculates the contact mask and the raw deformations after pressing the
+    object on the gelpad
 
     @param object_path: .ply file describing the object
-    @param dome_map: (D, D) array representing the gelpad model, in pixels; the height is zero at the center and
-    increases as the radius increases; there might be zeros at the four corners; for example:
+    @param dome_map: (D, D) array representing the gelpad model, in pixels; the
+    height is zero at the center and increases as the radius increases; there
+    might be zeros at the four corners; for example:
         0 3 2 3 0
         3 2 1 2 3
         2 1 0 1 2
         3 2 1 2 3
         0 3 2 3 0
-    @param press_depth: the extent of indentation measured in millimeters; note that the starting configuration is when
-    the most protruding point of the object is z aligned with the gelpad's center
+    @param press_depth: the extent of indentation measured in millimeters; note
+    that the starting configuration is when the most protruding point of the
+    object is z-aligned with the center of the gelpad
     @return:
-        contact_mask: (D, D) array indicating points at which the object is in contact with the gelpad
+        contact_mask: (D, D) array indicating points at which the object is in
+        contact with the gelpad
         gel_map: (D, D) array representing the raw z deformations, in pixels
     """
     # parse the vertices (k, 3) of the object
@@ -42,9 +47,12 @@ def press_object(object_path, dome_map, press_depth):
     y_mean = np.mean(vertices[:, 1])
     x_scaled = ((vertices[:, 0] - x_mean) * PPMM + D // 2).astype(int)
     y_scaled = ((vertices[:, 1] - y_mean) * PPMM + D // 2).astype(int)
-    mask = (0 < x_scaled) & (x_scaled < D) & (0 < y_scaled) & (y_scaled < D) & (vertices[:, 2] > Z_THRESHOLD)
+    mask = ((0 < x_scaled) & (x_scaled < D)
+            & (0 < y_scaled) & (y_scaled < D)
+            & (vertices[:, 2] > Z_THRESHOLD))
 
-    # construct and update the height map (D, D) representing extent of indentation at each point
+    # construct and update the height map (D, D) representing extent of
+    # indentation at each point
     height_map = np.zeros((D, D))
     height_map[y_scaled[mask], x_scaled[mask]] = vertices[mask, 2]
     height_map -= np.max(height_map)
@@ -74,7 +82,9 @@ def fill_zeros(image):
     )
 
     # for some reason we need the transpose here
-    filled = interpolate.griddata(points, values, tuple(xi), method="linear", fill_value=0).T
+    filled = interpolate.griddata(
+        points, values, tuple(xi), method="linear", fill_value=0
+    ).T
 
     return filled
 
@@ -82,10 +92,14 @@ def fill_zeros(image):
 if __name__ == "__main__":
     # parse arguments
     parser = argparse.ArgumentParser()
-    parser.add_argument("-obj", default='square', help="Object to be tested; supported: square, cylinder6")
-    parser.add_argument('-dx', default=0.0, type=float, help='Shear load on the x axis')
-    parser.add_argument('-dy', default=0.0, type=float, help='Shear load on the y axis')
-    parser.add_argument('-dz', default=1.0, type=float, help='Shear load on the z axis')
+    parser.add_argument("-obj", default="square",
+                        help="Test object; supported: square, cylinder6")
+    parser.add_argument("-dx", default=0.0, type=float,
+                        help="Load on the x axis")
+    parser.add_argument("-dy", default=0.0, type=float,
+                        help="Load on the y axis")
+    parser.add_argument("-dz", default=1.0, type=float,
+                        help="Load on the z axis")
     args = parser.parse_args()
 
     # obtain contact mask and gel map
@@ -104,17 +118,17 @@ if __name__ == "__main__":
     plt.figure(0)
 
     plt.subplot(3, 1, 1)
-    fig = plt.imshow(fill_zeros(result_map[:, :, 0]), cmap='seismic')
+    fig = plt.imshow(fill_zeros(result_map[:, :, 0]), cmap="seismic")
     fig.axes.get_xaxis().set_visible(False)
     fig.axes.get_yaxis().set_visible(False)
 
     plt.subplot(3, 1, 2)
-    fig = plt.imshow(fill_zeros(result_map[:, :, 1]), cmap='seismic')
+    fig = plt.imshow(fill_zeros(result_map[:, :, 1]), cmap="seismic")
     fig.axes.get_xaxis().set_visible(False)
     fig.axes.get_yaxis().set_visible(False)
 
     plt.subplot(3, 1, 3)
-    fig = plt.imshow(fill_zeros(result_map[:, :, 2]), cmap='seismic')
+    fig = plt.imshow(fill_zeros(result_map[:, :, 2]), cmap="seismic")
     fig.axes.get_xaxis().set_visible(False)
     fig.axes.get_yaxis().set_visible(False)
 
