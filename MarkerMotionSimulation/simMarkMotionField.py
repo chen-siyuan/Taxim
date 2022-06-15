@@ -37,19 +37,22 @@ def press_object(object_path, dome_map, press_depth):
     """
     # parse the vertices (k, 3) of the object
     lines = open(object_path).readlines()
-    vertices = np.array([
-        list(map(float, line.strip().split(" ")))
-        for line in lines[VERTICES_START:]
-    ])
+    vertices = np.array(
+        [list(map(float, line.strip().split(" "))) for line in lines[VERTICES_START:]]
+    )
 
     # obtain the mask (k) for points in range after converting to pixels
     x_mean = np.mean(vertices[:, 0])
     y_mean = np.mean(vertices[:, 1])
     x_scaled = ((vertices[:, 0] - x_mean) * PPMM + D // 2).astype(int)
     y_scaled = ((vertices[:, 1] - y_mean) * PPMM + D // 2).astype(int)
-    mask = ((0 < x_scaled) & (x_scaled < D)
-            & (0 < y_scaled) & (y_scaled < D)
-            & (vertices[:, 2] > Z_THRESHOLD))
+    mask = (
+        (0 < x_scaled)
+        & (x_scaled < D)
+        & (0 < y_scaled)
+        & (y_scaled < D)
+        & (vertices[:, 2] > Z_THRESHOLD)
+    )
 
     # construct and update the height map (D, D) representing extent of
     # indentation at each point
@@ -76,14 +79,11 @@ def fill_zeros(image):
     """
     points = np.nonzero(image)
     values = image[points].ravel()
-    xi = np.meshgrid(
-        np.arange(0, image.shape[0]),
-        np.arange(0, image.shape[1])
-    )
+    xi = np.meshgrid(np.arange(0, image.shape[0]), np.arange(0, image.shape[1]))
 
     # for some reason we need the transpose here
     filled = interpolate.griddata(
-        points, values, tuple(xi), method="linear", fill_value=0
+        points, values, tuple(xi), method="nearest", fill_value=0
     ).T
 
     return filled
@@ -92,14 +92,12 @@ def fill_zeros(image):
 if __name__ == "__main__":
     # parse arguments
     parser = argparse.ArgumentParser()
-    parser.add_argument("-obj", default="square",
-                        help="Test object; supported: square, cylinder6")
-    parser.add_argument("-dx", default=0.0, type=float,
-                        help="Load on the x axis")
-    parser.add_argument("-dy", default=0.0, type=float,
-                        help="Load on the y axis")
-    parser.add_argument("-dz", default=1.0, type=float,
-                        help="Load on the z axis")
+    parser.add_argument(
+        "-obj", default="square", help="Test object; supported: square, cylinder6"
+    )
+    parser.add_argument("-dx", default=0.0, type=float, help="Load on the x axis")
+    parser.add_argument("-dy", default=0.0, type=float, help="Load on the y axis")
+    parser.add_argument("-dz", default=1.0, type=float, help="Load on the z axis")
     args = parser.parse_args()
 
     # obtain contact mask and gel map
@@ -118,17 +116,17 @@ if __name__ == "__main__":
     plt.figure(0)
 
     plt.subplot(3, 1, 1)
-    fig = plt.imshow(fill_zeros(result_map[:, :, 0]), cmap="seismic")
+    fig = plt.imshow(fill_zeros(result_map[:, :, 0]), cmap="RdBu")
     fig.axes.get_xaxis().set_visible(False)
     fig.axes.get_yaxis().set_visible(False)
 
     plt.subplot(3, 1, 2)
-    fig = plt.imshow(fill_zeros(result_map[:, :, 1]), cmap="seismic")
+    fig = plt.imshow(fill_zeros(result_map[:, :, 1]), cmap="RdBu")
     fig.axes.get_xaxis().set_visible(False)
     fig.axes.get_yaxis().set_visible(False)
 
     plt.subplot(3, 1, 3)
-    fig = plt.imshow(fill_zeros(result_map[:, :, 2]), cmap="seismic")
+    fig = plt.imshow(fill_zeros(result_map[:, :, 2]), cmap="RdBu")
     fig.axes.get_xaxis().set_visible(False)
     fig.axes.get_yaxis().set_visible(False)
 
