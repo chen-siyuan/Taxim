@@ -77,10 +77,10 @@ class FEMDataLoader:
         mask: sparse nodes
         """
         # origin height, dx, dy, dz
-        deformMap = np.zeros((4, psp.d, psp.d)) # here 640 * 640, easy to rotate
-        mask = np.zeros((psp.d, psp.d))
-        y_shift = psp.d//2
-        x_shift = psp.d//2
+        deformMap = np.zeros((4, psp.D, psp.D)) # here 640 * 640, easy to rotate
+        mask = np.zeros((psp.D, psp.D))
+        y_shift = psp.D // 2
+        x_shift = psp.D // 2
 
         for i in range(self.num_points):
             x_pix = int(self.x_list[i]/psp.pixmm)
@@ -90,9 +90,9 @@ class FEMDataLoader:
             x_local = int(-1*x_pix + x_shift +dx/psp.pixmm)
             y_local = int(-1*y_pix + y_shift +dy/psp.pixmm)
             # check boundary
-            if x_local < 0 or x_local >= psp.d:
+            if x_local < 0 or x_local >= psp.D:
                 continue
-            if y_local < 0 or y_local >= psp.d:
+            if y_local < 0 or y_local >= psp.D:
                 continue
             z_pix = self.z_list[i]/psp.pixmm
             deformMap[0, y_local,x_local] = z_pix
@@ -112,10 +112,10 @@ class FEMDataLoader:
         dx = fill_blank(deformMap[1,:,:])
         dy = fill_blank(deformMap[2,:,:])
         dz = fill_blank(deformMap[3,:,:])
-        idx_x = np.arange(psp.d//2)
-        idx_vx = psp.d-1 - idx_x
-        idx_y = np.arange(psp.d//2)
-        idx_vy = psp.d-1 - idx_y
+        idx_x = np.arange(psp.D // 2)
+        idx_vx = psp.D - 1 - idx_x
+        idx_y = np.arange(psp.D // 2)
+        idx_vy = psp.D - 1 - idx_y
         error_x = dx[:,idx_x] + dx[:,idx_vx]
         error_y = dy[idx_y,:] + dy[idx_vy,:]
         # correct the error
@@ -141,7 +141,7 @@ class FEMDataLoader:
         dz[idx_y,:] -= error_zx/2.0
         dz[idx_vy,:] += error_zx/2.0
 
-        filledMap = np.zeros((4, psp.d, psp.d))
+        filledMap = np.zeros((4, psp.D, psp.D))
         filledMap[0,:,:] = z
         filledMap[1,:,:] = dx
         filledMap[2,:,:] = dy
@@ -157,10 +157,10 @@ class FEMDataLoader:
         dx = fill_blank(deformMap[1,:,:])
         dy = fill_blank(deformMap[2,:,:])
         dz = fill_blank(deformMap[3,:,:])
-        idx_x = np.arange(psp.d//2)
-        idx_vx = psp.d-1 - idx_x
-        idx_y = np.arange(psp.d//2)
-        idx_vy = psp.d-1 - idx_y
+        idx_x = np.arange(psp.D // 2)
+        idx_vx = psp.D - 1 - idx_x
+        idx_y = np.arange(psp.D // 2)
+        idx_vy = psp.D - 1 - idx_y
         error_x = dx[:,idx_x] + dx[:,idx_vx]
         error_y = dy[idx_y,:] + dy[idx_vy,:]
 
@@ -181,7 +181,7 @@ class FEMDataLoader:
         dz[idx_y,:] -= error_zx/2.0
         dz[idx_vy,:] += error_zx/2.0
 
-        filledMap = np.zeros((4, psp.d, psp.d))
+        filledMap = np.zeros((4, psp.D, psp.D))
         filledMap[0,:,:] = z
         filledMap[1,:,:] = dx
         filledMap[2,:,:] = dy
@@ -190,28 +190,28 @@ class FEMDataLoader:
         deform_list = []
         deform_list.append(filledMap)
 
-        fullMap = np.zeros((4, psp.d, psp.d))
+        fullMap = np.zeros((4, psp.D, psp.D))
         fullMap[0,:,:] = z
         fullMap[1,:,:] = dx
         fullMap[2,:,:] = dy
         fullMap[3,:,:] = dz
 
         # rotate 3 times
-        filledMap = np.zeros((4, psp.d, psp.d))
+        filledMap = np.zeros((4, psp.D, psp.D))
         filledMap[0,:,:] = np.rot90(fullMap[0,:,:])
         filledMap[2,:,:] = -1*np.rot90(fullMap[1,:,:])
         filledMap[1,:,:] = np.rot90(fullMap[2,:,:])
         filledMap[3,:,:] = np.rot90(fullMap[3,:,:])
         deform_list.append(filledMap)
 
-        filledMap = np.zeros((4, psp.d, psp.d))
+        filledMap = np.zeros((4, psp.D, psp.D))
         filledMap[0,:,:] = np.rot90(fullMap[0,:,:],2)
         filledMap[1,:,:] = -1*np.rot90(fullMap[1,:,:],2)
         filledMap[2,:,:] = -1*np.rot90(fullMap[2,:,:],2)
         filledMap[3,:,:] = np.rot90(fullMap[3,:,:],2)
         deform_list.append(filledMap)
 
-        filledMap = np.zeros((4, psp.d, psp.d))
+        filledMap = np.zeros((4, psp.D, psp.D))
         filledMap[0,:,:] = np.rot90(fullMap[0,:,:],3)
         filledMap[2,:,:] = np.rot90(fullMap[1,:,:],3)
         filledMap[1,:,:] = -1*np.rot90(fullMap[2,:,:],3)
@@ -278,10 +278,10 @@ class FEMCalib:
         return t, T
     def getAllTensor(self,local_key):
         """ get all mutual tensors"""
-        tensorMap = np.zeros((psp.d,psp.d,3,3))
+        tensorMap = np.zeros((psp.D, psp.D, 3, 3))
         x_k, y_k = local_key
-        for i in range(0,psp.d):
-            for j in range(0,psp.d):
+        for i in range(0, psp.D):
+            for j in range(0, psp.D):
                 t, T = self.getTensor(local_key, [j,i])
                 tensorMap[i,j,:,:] = T
         return tensorMap
@@ -308,7 +308,7 @@ if __name__ == "__main__":
     deformMap_list.append(dzdeformMap)
 
     femCalib = FEMCalib(deformMap_list)
-    tensorMap = femCalib.getAllTensor([psp.d//2,psp.d//2])
+    tensorMap = femCalib.getAllTensor([psp.D // 2, psp.D // 2])
 
     save_path = osp.join( "..", "calibs", "femCalib.npz")
     np.savez(save_path, tensorMap=tensorMap, nodeMask = node_mask)

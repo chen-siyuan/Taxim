@@ -1,96 +1,123 @@
-import matplotlib.pyplot as plt
-import numpy as np
-import os
-from os import path as osp
 import argparse
-import sys
-sys.path.append("..")
-import Basics.sensorParams as psp
-from compose.dataLoader import dataLoader
-from compose.superposition import SuperPosition, fill_blank, cropMap
+import os
 
-parser = argparse.ArgumentParser()
-parser.add_argument("-obj", nargs='?', default='square',
-                    help="Name of Object to be tested, supported_objects_list = [square, cylinder6]")
-parser.add_argument('-dx', default = 0.0, type=float, help='Shear load on X axis.')
-parser.add_argument('-dy', default = 0.0, type=float, help='Shear load on Y axis.')
-parser.add_argument('-dz', default = 1.0, type=float, help='Shear load on Z axis.')
-args = parser.parse_args()
+import numpy as np
+from matplotlib import pyplot as plt
+from scipy import interpolate
 
-def getDomeHeightMap(filePath, obj, press_depth, domeMap):
+from Basics.sensorParams import D, PPMM
+from compose.superposition import SuperPosition
+
+VERTICES_START = 10  # vertices start at line 11 in ply file
+Z_THRESHOLD = 0.2  # lower bound for masking objects
+
+
+def press_object(object_path, dome_map, press_depth):
     """
-    get the height map & contact mask from the object and gelpad model
-    obj: object's point cloud
-    press_depth: in millimeter
-    domeMap: gelpad model
-    return:
-    zq: height map with contact
-    contact_mask
+    Calculates the contact mask and the raw deformations after pressing the object on the gelpad
+
+    @param object_path: .ply file describing the object
+    @param dome_map: (D, D) array representing the gelpad model, in pixels; the height is zero at the center and
+    increases as the radius increases; there might be zeros at the four corners; for example:
+        0 3 2 3 0
+        3 2 1 2 3
+        2 1 0 1 2
+        3 2 1 2 3
+        0 3 2 3 0
+    @param press_depth: the extent of indentation measured in millimeters; note that the starting configuration is when
+    the most protruding point of the object is z aligned with the gelpad's center
+    @return:
+        contact_mask: (D, D) array indicating points at which the object is in contact with the gelpad
+        gel_map: (D, D) array representing the raw z deformations, in pixels
     """
-    # read in the object's model
-    objPath = osp.join(filePath,obj)
-    f = open(objPath)
-    lines = f.readlines()
-    verts_num = int(lines[3].split(' ')[-1])
-    verts_lines = lines[10:10 + verts_num]
-    vertices = np.array([list(map(float, l.strip().split(' '))) for l in verts_lines])
-    heightMap = np.zeros((psp.d,psp.d))
+    # parse the vertices (k, 3) of the object
+    lines = open(object_path).readlines()
+    vertices = np.array([
+        list(map(float, line.strip().split(" ")))
+        for line in lines[VERTICES_START:]
+    ])
 
-    cx = np.mean(vertices[:,0])
-    cy = np.mean(vertices[:,1])
-    uu = ((vertices[:,0] - cx)/psp.pixmm + psp.d//2).astype(int)
-    vv = ((vertices[:,1] - cy)/psp.pixmm + psp.d//2).astype(int)
+    # obtain the mask (k) for points in range after converting to pixels
+    x_mean = np.mean(vertices[:, 0])
+    y_mean = np.mean(vertices[:, 1])
+    x_scaled = ((vertices[:, 0] - x_mean) * PPMM + D // 2).astype(int)
+    y_scaled = ((vertices[:, 1] - y_mean) * PPMM + D // 2).astype(int)
+    mask = (0 < x_scaled) & (x_scaled < D) & (0 < y_scaled) & (y_scaled < D) & (vertices[:, 2] > Z_THRESHOLD)
 
-    mask_u = np.logical_and(uu > 0, uu < psp.d)
-    mask_v = np.logical_and(vv > 0, vv < psp.d)
-    mask_z = vertices[:,2] > 0.2
-    mask_map = mask_u & mask_v & mask_z
-    heightMap[vv[mask_map],uu[mask_map]] = vertices[mask_map][:,2]/psp.pixmm
+    # construct and update the height map (D, D) representing extent of indentation at each point
+    height_map = np.zeros((D, D))
+    height_map[y_scaled[mask], x_scaled[mask]] = vertices[mask, 2]
+    height_map -= np.max(height_map)
+    height_map += press_depth
+    height_map = height_map * PPMM
 
-    max_o = np.max(heightMap)
-    heightMap -= max_o
-    pressing_height_pix = press_depth/psp.pixmm
+    # obtain the contact mask (D, D) and the gel map (D, D)
+    contact_mask = height_map > dome_map
+    gel_map = np.zeros((D, D))
+    gel_map[contact_mask] = height_map[contact_mask] - dome_map[contact_mask]
 
-    gel_map = heightMap+pressing_height_pix
+    return contact_mask, gel_map
 
-    contact_mask = (gel_map > domeMap)
-    zq = np.zeros((psp.d,psp.d))
-    zq[contact_mask] = gel_map[contact_mask] - domeMap[contact_mask]
-    return zq, contact_mask
+
+def fill_zeros(image):
+    """
+    Use linear interpolation to fill zeros
+
+    @param image: (H, W) array representing one channel of the image
+    @return: filled: (H, W) array with zeros filled
+    """
+    points = np.nonzero(image)
+    values = image[points].ravel()
+    xi = np.meshgrid(
+        np.arange(0, image.shape[0]),
+        np.arange(0, image.shape[1])
+    )
+
+    # for some reason we need the transpose here
+    filled = interpolate.griddata(points, values, tuple(xi), method="linear", fill_value=0).T
+
+    return filled
 
 
 if __name__ == "__main__":
-    # calibration file
-    data_folder = osp.join("..", "calibs", "femCalib.npz")
-    super = SuperPosition(data_folder)
+    # parse arguments
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-obj", default='square', help="Object to be tested; supported: square, cylinder6")
+    parser.add_argument('-dx', default=0.0, type=float, help='Shear load on the x axis')
+    parser.add_argument('-dy', default=0.0, type=float, help='Shear load on the y axis')
+    parser.add_argument('-dz', default=1.0, type=float, help='Shear load on the z axis')
+    args = parser.parse_args()
 
-    # compose
-    filePath = osp.join('..', 'data', 'objects')
-    obj = args.obj+'.ply'
-    local_deform = np.array([args.dx, args.dy, args.dz])
-    press_depth = local_deform[2]
+    # obtain contact mask and gel map
+    object_path = os.path.join("..", "data", "objects", "%s.ply" % args.obj)
+    dome_map = np.load(os.path.join("..", "calibs", "dome_gel.npy"))
+    raw_deform = np.array([args.dx, args.dy, args.dz])
+    press_depth = raw_deform[2]
+    contact_mask, gel_map = press_object(object_path, dome_map, press_depth)
 
-    domeMap = np.load(osp.join('..', 'calibs', 'dome_gel.npy'))
-    gel_map, contact_mask = getDomeHeightMap(filePath, obj, press_depth, domeMap)
-    resultMap = super.compose_sparse(local_deform, gel_map, contact_mask)
+    # obtain result map
+    fem_path = os.path.join("..", "calibs", "femCalib.npz")
+    sp = SuperPosition(fem_path)
+    result_map = sp.propagate_deform(raw_deform, contact_mask, gel_map)
 
-    #### for visualization/saving the results ###
-    compose_savePath = osp.join('..', 'results', args.obj+'_compose.jpg')
+    # visualize
+    plt.figure(0)
 
-    plt.figure(1)
-    plt.subplot(311)
-    fig = plt.imshow(fill_blank(resultMap[0,:,:]), cmap='RdBu')
+    plt.subplot(3, 1, 1)
+    fig = plt.imshow(fill_zeros(result_map[:, :, 0]), cmap='seismic')
     fig.axes.get_xaxis().set_visible(False)
     fig.axes.get_yaxis().set_visible(False)
 
-    plt.subplot(312)
-    fig = plt.imshow(fill_blank(resultMap[1,:,:]), cmap='RdBu')
+    plt.subplot(3, 1, 2)
+    fig = plt.imshow(fill_zeros(result_map[:, :, 1]), cmap='seismic')
     fig.axes.get_xaxis().set_visible(False)
     fig.axes.get_yaxis().set_visible(False)
 
-    plt.subplot(313)
-    fig = plt.imshow(fill_blank(resultMap[2,:,:]), cmap='RdBu')
+    plt.subplot(3, 1, 3)
+    fig = plt.imshow(fill_zeros(result_map[:, :, 2]), cmap='seismic')
     fig.axes.get_xaxis().set_visible(False)
     fig.axes.get_yaxis().set_visible(False)
+
     # plt.show()
-    plt.savefig(compose_savePath)
+    output_path = os.path.join("..", "results", "%s_compose.jpg" % args.obj)
+    plt.savefig(output_path)

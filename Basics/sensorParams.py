@@ -1,11 +1,11 @@
 # experimental params
 ball_radius = 4.00/2
-pixmm = 0.0295 #0.0266 digit
+PPMM = 33.898  # 37.594 for DIGIT (pixels per millimeter)
 
 # lookup table params
 numBins = 125;
 
 # sensor setting
-h = 480
-w = 640
-d = 900
+H = 480
+W = 640
+D = 900

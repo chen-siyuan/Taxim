@@ -106,13 +106,13 @@ class simulator(object):
         grad_mag, grad_dir = self.generate_normals(heightMap)
 
         # generate raw simulated image without background
-        sim_img_r = np.zeros((psp.h,psp.w,3))
+        sim_img_r = np.zeros((psp.H, psp.W, 3))
         bins = psp.numBins
 
-        [xx, yy] = np.meshgrid(range(psp.w), range(psp.h))
+        [xx, yy] = np.meshgrid(range(psp.W), range(psp.H))
         xf = xx.flatten()
         yf = yy.flatten()
-        A = np.array([xf*xf,yf*yf,xf*yf,xf,yf,np.ones(psp.h*psp.w)]).T
+        A = np.array([xf * xf, yf * yf, xf * yf, xf, yf, np.ones(psp.H * psp.W)]).T
         binm = bins - 1
 
         # discritize grids
@@ -124,19 +124,19 @@ class simulator(object):
 
         # look up polynomial table and assign intensity
         params_r = self.calib_data.grad_r[idx_x,idx_y,:]
-        params_r = params_r.reshape((psp.h*psp.w), params_r.shape[2])
+        params_r = params_r.reshape((psp.H * psp.W), params_r.shape[2])
         params_g = self.calib_data.grad_g[idx_x,idx_y,:]
-        params_g = params_g.reshape((psp.h*psp.w), params_g.shape[2])
+        params_g = params_g.reshape((psp.H * psp.W), params_g.shape[2])
         params_b = self.calib_data.grad_b[idx_x,idx_y,:]
-        params_b = params_b.reshape((psp.h*psp.w), params_b.shape[2])
+        params_b = params_b.reshape((psp.H * psp.W), params_b.shape[2])
 
         est_r = np.sum(A * params_r,axis = 1)
         est_g = np.sum(A * params_g,axis = 1)
         est_b = np.sum(A * params_b,axis = 1)
 
-        sim_img_r[:,:,0] = est_r.reshape((psp.h,psp.w))
-        sim_img_r[:,:,1] = est_g.reshape((psp.h,psp.w))
-        sim_img_r[:,:,2] = est_b.reshape((psp.h,psp.w))
+        sim_img_r[:,:,0] = est_r.reshape((psp.H, psp.W))
+        sim_img_r[:,:,1] = est_g.reshape((psp.H, psp.W))
+        sim_img_r[:,:,2] = est_b.reshape((psp.H, psp.W))
 
         # attach background to simulated image
         sim_img = sim_img_r + self.bg_proc
@@ -145,8 +145,8 @@ class simulator(object):
             return sim_img, sim_img
 
         # add shadow
-        cx = psp.w//2
-        cy = psp.h//2
+        cx = psp.W // 2
+        cy = psp.H // 2
 
         # find shadow attachment area
         kernel = np.ones((5, 5), np.uint8)
@@ -168,7 +168,7 @@ class simulator(object):
         height_idx_max = int(np.max(height_idx))
         total_height_idx = self.shadowTable.shape[2]
 
-        shadowSim = np.zeros((psp.h,psp.w,3))
+        shadowSim = np.zeros((psp.H, psp.W, 3))
 
         # all 3 channels
         for c in range(3):
@@ -207,7 +207,7 @@ class simulator(object):
                         cur_x = int(cx_origin + pr.shadow_step * s * ct)
                         cur_y = int(cy_origin + pr.shadow_step * s * st)
                         # check boundary of the image and height's difference
-                        if cur_x >= 0 and cur_x < psp.w and cur_y >= 0 and cur_y < psp.h and heightMap[cy_origin,cx_origin] > heightMap[cur_y,cur_x]:
+                        if cur_x >= 0 and cur_x < psp.W and cur_y >= 0 and cur_y < psp.H and heightMap[cy_origin, cx_origin] > heightMap[cur_y, cur_x]:
                             frame[cur_y,cur_x] = np.minimum(frame[cur_y,cur_x],v[s])
 
             shadowSim[:,:,c] = frame
@@ -231,17 +231,17 @@ class simulator(object):
         # load dome-shape gelpad model
         gel_map = np.load(gelpad_model_path)
         gel_map = cv2.GaussianBlur(gel_map.astype(np.float32),(pr.kernel_size,pr.kernel_size),0)
-        heightMap = np.zeros((psp.h,psp.w))
+        heightMap = np.zeros((psp.H, psp.W))
 
         # centralize the points
         cx = np.mean(self.vertices[:,0])
         cy = np.mean(self.vertices[:,1])
         # add the shifting and change to the pix coordinate
-        uu = ((self.vertices[:,0] - cx)/psp.pixmm + psp.w//2+dx).astype(int)
-        vv = ((self.vertices[:,1] - cy)/psp.pixmm + psp.h//2+dy).astype(int)
+        uu = ((self.vertices[:,0] - cx) / psp.pixmm + psp.W // 2 + dx).astype(int)
+        vv = ((self.vertices[:,1] - cy) / psp.pixmm + psp.H // 2 + dy).astype(int)
         # check boundary of the image
-        mask_u = np.logical_and(uu > 0, uu < psp.w)
-        mask_v = np.logical_and(vv > 0, vv < psp.h)
+        mask_u = np.logical_and(uu > 0, uu < psp.W)
+        mask_v = np.logical_and(vv > 0, vv < psp.H)
         # check the depth
         mask_z = self.vertices[:,2] > 0.2
         mask_map = mask_u & mask_v & mask_z
@@ -260,7 +260,7 @@ class simulator(object):
         contact_mask = heightMap > gel_map
 
         # combine contact area of object shape with non contact area of gelpad shape
-        zq = np.zeros((psp.h,psp.w))
+        zq = np.zeros((psp.H, psp.W))
 
         zq[contact_mask]  = heightMap[contact_mask]
         zq[~contact_mask] = gel_map[~contact_mask]
