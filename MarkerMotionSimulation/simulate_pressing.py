@@ -5,8 +5,8 @@ import numpy as np
 from matplotlib import pyplot as plt
 from scipy import interpolate
 
-from Basics.sensorParams import D, PPMM
-from compose.superposition import SuperPosition
+from Basics.sensorParams import H, W, D, PPMM
+from compose.superposition import Superposition
 
 
 VERTICES_START = 10  # vertices start at line 11 in ply file
@@ -37,22 +37,21 @@ def press_object(object_path, dome_map, press_depth):
     """
     # parse the vertices (k, 3) of the object
     lines = open(object_path).readlines()
-    vertices = np.array(
-        [list(map(float, line.strip().split(" "))) for line in lines[VERTICES_START:]]
-    )
+    vertices = np.array([
+        list(map(float, line.strip().split(" ")))
+        for line in lines[VERTICES_START:]
+    ])
 
     # obtain the mask (k) for points in range after converting to pixels
     x_mean = np.mean(vertices[:, 0])
     y_mean = np.mean(vertices[:, 1])
     x_scaled = ((vertices[:, 0] - x_mean) * PPMM + D // 2).astype(int)
     y_scaled = ((vertices[:, 1] - y_mean) * PPMM + D // 2).astype(int)
-    mask = (
-        (0 < x_scaled)
-        & (x_scaled < D)
-        & (0 < y_scaled)
-        & (y_scaled < D)
-        & (vertices[:, 2] > Z_THRESHOLD)
-    )
+    mask = np.logical_and.reduce((
+        0 <= x_scaled, x_scaled < D,
+        0 <= y_scaled, y_scaled < D,
+        vertices[:, 2] > Z_THRESHOLD
+    ))
 
     # construct and update the height map (D, D) representing extent of
     # indentation at each point
@@ -92,12 +91,14 @@ def fill_zeros(image):
 if __name__ == "__main__":
     # parse arguments
     parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "-obj", default="square", help="Test object; supported: square, cylinder6"
-    )
-    parser.add_argument("-dx", default=0.0, type=float, help="Load on the x axis")
-    parser.add_argument("-dy", default=0.0, type=float, help="Load on the y axis")
-    parser.add_argument("-dz", default=1.0, type=float, help="Load on the z axis")
+    parser.add_argument("-obj", default="square",
+                        help="Test object; supported: square, cylinder6")
+    parser.add_argument("-dx", default=0.0, type=float,
+                        help="Load on the x axis")
+    parser.add_argument("-dy", default=0.0, type=float,
+                        help="Load on the y axis")
+    parser.add_argument("-dz", default=1.0, type=float,
+                        help="Load on the z axis")
     args = parser.parse_args()
 
     # obtain contact mask and gel map
@@ -109,27 +110,33 @@ if __name__ == "__main__":
 
     # obtain result map
     fem_path = os.path.join("..", "calibs", "femCalib.npz")
-    sp = SuperPosition(fem_path)
+    sp = Superposition(fem_path)
     result_map = sp.propagate_deform(raw_deform, contact_mask, gel_map)
+
+    # crop by taking a (H, W) subarray at the center of the (D, D) array
+    h = H // 2
+    w = W // 2
+    d = D // 2
+    cropped_map = result_map[d - h:d + h, d - w:d + w, :]
 
     # visualize
     plt.figure(0)
 
     plt.subplot(3, 1, 1)
-    fig = plt.imshow(fill_zeros(result_map[:, :, 0]), cmap="RdBu")
+    fig = plt.imshow(fill_zeros(cropped_map[:, :, 0]), cmap="RdBu")
     fig.axes.get_xaxis().set_visible(False)
     fig.axes.get_yaxis().set_visible(False)
 
     plt.subplot(3, 1, 2)
-    fig = plt.imshow(fill_zeros(result_map[:, :, 1]), cmap="RdBu")
+    fig = plt.imshow(fill_zeros(cropped_map[:, :, 1]), cmap="RdBu")
     fig.axes.get_xaxis().set_visible(False)
     fig.axes.get_yaxis().set_visible(False)
 
     plt.subplot(3, 1, 3)
-    fig = plt.imshow(fill_zeros(result_map[:, :, 2]), cmap="RdBu")
+    fig = plt.imshow(fill_zeros(cropped_map[:, :, 2]), cmap="RdBu")
     fig.axes.get_xaxis().set_visible(False)
     fig.axes.get_yaxis().set_visible(False)
 
-    # plt.show()
-    output_path = os.path.join("..", "results", "%s_compose.jpg" % args.obj)
-    plt.savefig(output_path)
+    plt.show()
+    # output_path = os.path.join("..", "results", "%s_compose.jpg" % args.obj)
+    # plt.savefig(output_path)
