@@ -1,4 +1,5 @@
 import numpy as np
+from scipy.optimize import nnls
 
 from Basics.sensorParams import D, PPMM
 
@@ -62,13 +63,25 @@ class Superposition:
         deform_map[:, :, 2] = gel_map
 
         # first step: correction
-        """
-        TODO: obtain virtual loads for contact points through non-negative least
-        squares instead of directly using their vanilla displacements for
-        propagation; basically, need to calculate virtual displacements which,
-        after propagation between active nodes, result in the current, raw
-        displacements
-        """
+        # can't really evaluate this step without access to ground truth data
+        act_num = act_xs.size
+        matrix = np.zeros((act_num * 3, act_num * 3))
+        for i, (x1, y1) in enumerate(zip(act_xs, act_ys)):
+            for j, (x2, y2) in enumerate(zip(act_xs, act_ys)):
+                dx = x1 - x2 + D // 2
+                dy = y1 - y2 + D // 2
+                tensor = self.tensor_map[dx, dy, :, :]
+                for k in range(3):
+                    for l in range(3):
+                        matrix[i * 3 + k, j * 3 + l] = tensor[k, l]
+        result = np.zeros(act_num * 3)
+        for i, (x, y) in enumerate(zip(act_xs, act_ys)):
+            for j in range(3):
+                result[i * 3 + j] = deform_map[x, y, j]
+        solution, _ = nnls(matrix, result)
+        for i, (x, y) in enumerate(zip(act_xs, act_ys)):
+            for j in range(3):
+                deform_map[x, y, j] = solution[i * 3 + j]
 
         # second step: propagation
         result_map = np.zeros((D, D, 3))
