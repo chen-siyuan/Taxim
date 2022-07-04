@@ -2,6 +2,7 @@ import numpy as np
 from scipy.optimize import nnls
 
 from Basics.sensorParams import D, PPMM
+from Basics.params import shear_friction, normal_friction
 
 
 class Superposition:
@@ -78,10 +79,11 @@ class Superposition:
         for i, (x, y) in enumerate(zip(act_xs, act_ys)):
             for j in range(3):
                 result[i * 3 + j] = deform_map[x, y, j]
-        solution, _ = nnls(matrix, result)
+        # solution = np.linalg.lstsq(matrix, result, rcond=-1)
+        solution = nnls(matrix, result)
         for i, (x, y) in enumerate(zip(act_xs, act_ys)):
             for j in range(3):
-                deform_map[x, y, j] = solution[i * 3 + j]
+                deform_map[x, y, j] = solution[0][i * 3 + j]
 
         # second step: propagation
         result_map = np.zeros((D, D, 3))
@@ -100,6 +102,8 @@ class Superposition:
             # deformations are retrieved through absolute positions; k3 refers
             # to the number of active points in range
             tensors = self.tensor_map[rel_xs[mask], rel_ys[mask], :, :]
+            tensors[:, 0:2, 0:2] *= shear_friction
+            tensors[:, 0:2, 2] *= normal_friction
             deforms = deform_map[act_xs[mask], act_ys[mask], :, np.newaxis]
 
             # calculate individual (k3, 3, 1) and total (3, 1) displacements

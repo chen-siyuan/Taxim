@@ -82,7 +82,7 @@ def fill_zeros(image):
 
     # for some reason we need the transpose here
     filled = interpolate.griddata(
-        points, values, tuple(xi), method="nearest", fill_value=0
+        points, values, tuple(xi), method="linear", fill_value=0
     ).T
 
     return filled
@@ -112,6 +112,9 @@ if __name__ == "__main__":
     fem_path = os.path.join("..", "calibs", "femCalib.npz")
     sp = Superposition(fem_path)
     result_map = sp.propagate_deform(raw_deform, contact_mask, gel_map)
+
+    print(result_map.shape)
+    exit(0)
 
     # crop by taking a (H, W) subarray at the center of the (D, D) array
     h = H // 2
