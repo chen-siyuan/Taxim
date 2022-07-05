@@ -16,6 +16,44 @@ def fill_zeros(image):
 
     return filled
 
+if __name__ == "__main__":
+    obj = "0630_dome_star_0.2_0.4_0.4"
+    path = "../data/FEM/" + obj + "/" + obj + "_"
+    x_path = path + "x.txt"
+    y_path = path + "y.txt"
+    z_path = path + "z.txt"
+    dl = DataLoader(x_path, y_path, z_path)
+    z_map, dx_map, dy_map, dz_map = dl.generate_gt()
+
+    h = H // 2
+    w = W // 2
+    d = D // 2
+    crop = lambda M: M[d - h:d + h, d - w:d + w]
+
+    # visualize
+    plt.figure(0)
+
+    plt.subplot(4, 1, 1)
+    fig = plt.imshow(fill_zeros(crop(z_map)), cmap="RdBu")
+    fig.axes.get_xaxis().set_visible(False)
+    fig.axes.get_yaxis().set_visible(False)
+
+    plt.subplot(4, 1, 2)
+    fig = plt.imshow(fill_zeros(crop(dx_map)), cmap="RdBu")
+    fig.axes.get_xaxis().set_visible(False)
+    fig.axes.get_yaxis().set_visible(False)
+
+    plt.subplot(4, 1, 3)
+    fig = plt.imshow(fill_zeros(crop(dy_map)), cmap="RdBu")
+    fig.axes.get_xaxis().set_visible(False)
+    fig.axes.get_yaxis().set_visible(False)
+
+    plt.subplot(4, 1, 4)
+    fig = plt.imshow(fill_zeros(crop(dz_map)), cmap="RdBu")
+    fig.axes.get_xaxis().set_visible(False)
+    fig.axes.get_yaxis().set_visible(False)
+
+    plt.show()
 
 if __name__ == "__main__":
     # parse arguments

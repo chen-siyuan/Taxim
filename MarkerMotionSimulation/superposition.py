@@ -1,15 +1,10 @@
+import os
+
 import numpy as np
 from scipy.optimize import nnls
 
-from Basics.sensorParams import D, PPMM
 from Basics.params import shear_friction, normal_friction
-
-import os
-
-
-
-
-FEM_PATH = os.path.join("..", "calibs", "femCalib.npz")
+from Basics.sensorParams import D
 
 
 class Superposition:
@@ -27,11 +22,12 @@ class Superposition:
         is collected and available (representative points, roughly 1%); the mask
         is dense towards the center and sparse towards the boundary
         """
-        fem_data = np.load(FEM_PATH, allow_pickle=True)
+        fem_data = np.load(os.path.join("..", "calibs", "femCalib.npz"),
+                           allow_pickle=True)
         self.tensor_map = fem_data["tensorMap"]
         self.sparse_mask = fem_data["nodeMask"]
 
-    def propagate_deform(self, raw_deform, contact_mask, gel_map):
+    def propagate_deform(self, xy_deform, contact_mask, gel_map):
         """
         Propagates deformations through all points after correction of active
         points' deformations
@@ -45,8 +41,8 @@ class Superposition:
         respective deformations; the individual displacements are then summed to
         produce the final deformation
 
-        @param raw_deform: (3,) array recording the raw x, y, z deformations, in
-        millimeters
+        @param xy_deform: (2,) array recording the raw x and y deformations, in
+        pixels
         @param contact_mask: (D, D) array indicating points at which the object
         is in contact with the gelpad
         @param gel_map: (D, D) array representing the raw z deformations, in
@@ -64,7 +60,7 @@ class Superposition:
         # initialize deform_map (D, D, 3) with x, y values from raw_deform and
         # z values from gel_map
         deform_map = np.zeros((D, D, 3))
-        deform_map[act_xs, act_ys, 0:2] = raw_deform[0:2] * PPMM
+        deform_map[act_xs, act_ys, 0:2] = xy_deform
         deform_map[:, :, 2] = gel_map
 
         # first step: correction

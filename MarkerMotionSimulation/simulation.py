@@ -1,10 +1,9 @@
-import numpy as np
-from Basics.sensorParams import PPMM, D
 import os
+
+import numpy as np
+
+from Basics.sensorParams import PPMM, D
 from superposition import Superposition
-
-
-DOME_PATH = os.path.join("..", "calibs", "dome_gel.npy")
 
 
 class Simulation:
@@ -29,7 +28,7 @@ class Simulation:
         self.height_map[x_scaled[mask], y_scaled[mask]] = vertices[mask, 2]
         self.height_map -= np.max(self.height_map)
         self.height_map *= PPMM
-        self.dome_map = np.load(DOME_PATH)
+        self.dome_map = np.load(os.path.join("..", "calibs", "dome_gel.npy"))
 
     def run(self, dx, dy, dz):
         press_depth = dz * PPMM
