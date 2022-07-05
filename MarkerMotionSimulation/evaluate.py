@@ -1,74 +1,3 @@
-import argparse
-import os
-
-import numpy as np
-from matplotlib import pyplot as plt
-from scipy import interpolate
-
-from Basics.sensorParams import PPMM, H, W, D
-from compose.superposition import Superposition
-
-
-VERTICES_START = 10  # vertices start at line 11 in ply file
-Z_THRESHOLD = 0.2  # lower bound for masking objects
-
-
-def press_object(object_path, dome_map, press_depth):
-    """
-    Calculates the contact mask and the raw deformations after pressing the
-    object on the gelpad
-
-    @param object_path: .ply file describing the object
-    @param dome_map: (D, D) array representing the gelpad model, in pixels; the
-    height is zero at the center and increases as the radius increases; there
-    might be zeros at the four corners; for example:
-        0 3 2 3 0
-        3 2 1 2 3
-        2 1 0 1 2
-        3 2 1 2 3
-        0 3 2 3 0
-    @param press_depth: the extent of indentation measured in millimeters; note
-    that the starting configuration is when the most protruding point of the
-    object is z-aligned with the center of the gelpad
-    @return:
-        contact_mask: (D, D) array indicating points at which the object is in
-        contact with the gelpad
-        gel_map: (D, D) array representing the raw z deformations, in pixels
-    """
-    # parse the vertices (k, 3) of the object
-    lines = open(object_path).readlines()
-    vertices = np.array([
-        list(map(float, line.strip().split(" ")))
-        for line in lines[VERTICES_START:]
-    ])
-
-    # obtain the mask (k) for points in range after converting to pixels
-    x_mean = np.mean(vertices[:, 0])
-    y_mean = np.mean(vertices[:, 1])
-    x_scaled = ((vertices[:, 0] - x_mean) * PPMM + D // 2).astype(int)
-    y_scaled = ((vertices[:, 1] - y_mean) * PPMM + D // 2).astype(int)
-    mask = np.logical_and.reduce((
-        0 <= x_scaled, x_scaled < D,
-        0 <= y_scaled, y_scaled < D,
-        vertices[:, 2] > Z_THRESHOLD
-    ))
-
-    # construct and update the height map (D, D) representing extent of
-    # indentation at each point
-    height_map = np.zeros((D, D))
-    height_map[x_scaled[mask], y_scaled[mask]] = vertices[mask, 2]
-    height_map -= np.max(height_map)
-    height_map += press_depth
-    height_map = height_map * PPMM
-
-    # obtain the contact mask (D, D) and the gel map (D, D)
-    contact_mask = height_map > dome_map
-    gel_map = np.zeros((D, D))
-    gel_map[contact_mask] = height_map[contact_mask] - dome_map[contact_mask]
-
-    return contact_mask, gel_map
-
-
 def fill_zeros(image):
     """
     Use linear interpolation to fill zeros
@@ -120,9 +49,6 @@ if __name__ == "__main__":
     w = W // 2
     d = D // 2
     cropped_map = result_map[d - h:d + h, d - w:d + w, :]
-
-    print(cropped_map.shape)
-    exit(0)
 
     # visualize
     plt.figure(0)

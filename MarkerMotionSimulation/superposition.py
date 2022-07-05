@@ -4,9 +4,16 @@ from scipy.optimize import nnls
 from Basics.sensorParams import D, PPMM
 from Basics.params import shear_friction, normal_friction
 
+import os
+
+
+
+
+FEM_PATH = os.path.join("..", "calibs", "femCalib.npz")
+
 
 class Superposition:
-    def __init__(self, fem_path):
+    def __init__(self):
         """
         Prepares tensor map and sparse mask for deformation propagation
 
@@ -19,10 +26,8 @@ class Superposition:
         sparse_mask: (D, D) array indicating points at which calibration data
         is collected and available (representative points, roughly 1%); the mask
         is dense towards the center and sparse towards the boundary
-
-        @param fem_path: path to the FEM calibration data file
         """
-        fem_data = np.load(fem_path, allow_pickle=True)
+        fem_data = np.load(FEM_PATH, allow_pickle=True)
         self.tensor_map = fem_data["tensorMap"]
         self.sparse_mask = fem_data["nodeMask"]
 
@@ -63,8 +68,6 @@ class Superposition:
         deform_map[:, :, 2] = gel_map
 
         # first step: correction
-        # TODO: can't really evaluate this step without access to ground truth
-        #  data
         act_num = act_xs.size
         matrix = np.zeros((act_num * 3, act_num * 3))
         for i, (x1, y1) in enumerate(zip(act_xs, act_ys)):

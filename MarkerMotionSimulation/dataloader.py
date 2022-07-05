@@ -74,8 +74,8 @@ class DataLoader:
 
 
 if __name__ == "__main__":
-    obj = "0630_dome_square_0.5_0.3_0.6"
-    path = "../../data/FEM/" + obj + "/" + obj + "_"
+    obj = "0630_dome_star_0.2_0.4_0.4"
+    path = "../data/FEM/" + obj + "/" + obj + "_"
     x_path = path + "x.txt"
     y_path = path + "y.txt"
     z_path = path + "z.txt"
