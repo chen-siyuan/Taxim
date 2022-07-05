@@ -6,7 +6,6 @@ from Basics.params import shear_friction, normal_friction
 
 
 class Superposition:
-
     def __init__(self, fem_path):
         """
         Prepares tensor map and sparse mask for deformation propagation
@@ -64,7 +63,8 @@ class Superposition:
         deform_map[:, :, 2] = gel_map
 
         # first step: correction
-        # can't really evaluate this step without access to ground truth data
+        # TODO: can't really evaluate this step without access to ground truth
+        #  data
         act_num = act_xs.size
         matrix = np.zeros((act_num * 3, act_num * 3))
         for i, (x1, y1) in enumerate(zip(act_xs, act_ys)):

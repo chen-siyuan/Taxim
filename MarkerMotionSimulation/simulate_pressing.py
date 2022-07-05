@@ -5,7 +5,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 from scipy import interpolate
 
-from Basics.sensorParams import H, W, D, PPMM
+from Basics.sensorParams import PPMM, H, W, D
 from compose.superposition import Superposition
 
 
@@ -56,7 +56,7 @@ def press_object(object_path, dome_map, press_depth):
     # construct and update the height map (D, D) representing extent of
     # indentation at each point
     height_map = np.zeros((D, D))
-    height_map[y_scaled[mask], x_scaled[mask]] = vertices[mask, 2]
+    height_map[x_scaled[mask], y_scaled[mask]] = vertices[mask, 2]
     height_map -= np.max(height_map)
     height_map += press_depth
     height_map = height_map * PPMM
@@ -113,14 +113,16 @@ if __name__ == "__main__":
     sp = Superposition(fem_path)
     result_map = sp.propagate_deform(raw_deform, contact_mask, gel_map)
 
-    print(result_map.shape)
-    exit(0)
+    # TODO: should we crop before interpolation or after?
 
     # crop by taking a (H, W) subarray at the center of the (D, D) array
     h = H // 2
     w = W // 2
     d = D // 2
     cropped_map = result_map[d - h:d + h, d - w:d + w, :]
+
+    print(cropped_map.shape)
+    exit(0)
 
     # visualize
     plt.figure(0)
