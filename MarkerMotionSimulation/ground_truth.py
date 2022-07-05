@@ -7,10 +7,10 @@ from Basics.sensorParams import PPMM, D
 
 class GroundTruth:
     @staticmethod
-    def dig(obj):
-        x_path = os.path.join("..", "data", "FEM", obj, "%s_x.txt" % obj)
-        y_path = os.path.join("..", "data", "FEM", obj, "%s_y.txt" % obj)
-        z_path = os.path.join("..", "data", "FEM", obj, "%s_z.txt" % obj)
+    def dig(data):
+        x_path = os.path.join("..", "data", "FEM", data, "%s_x.txt" % data)
+        y_path = os.path.join("..", "data", "FEM", data, "%s_y.txt" % data)
+        z_path = os.path.join("..", "data", "FEM", data, "%s_z.txt" % data)
 
         xs = []
         ys = []
