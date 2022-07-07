@@ -1,4 +1,4 @@
-import os
+from os import path
 
 import numpy as np
 
@@ -8,9 +8,9 @@ from Basics.sensorParams import PPMM, D
 class GroundTruth:
     @staticmethod
     def dig(data):
-        x_path = os.path.join("..", "data", "FEM", data, "%s_x.txt" % data)
-        y_path = os.path.join("..", "data", "FEM", data, "%s_y.txt" % data)
-        z_path = os.path.join("..", "data", "FEM", data, "%s_z.txt" % data)
+        x_path = path.join("..", "data", "FEM", data, "%s_x.txt" % data)
+        y_path = path.join("..", "data", "FEM", data, "%s_y.txt" % data)
+        z_path = path.join("..", "data", "FEM", data, "%s_z.txt" % data)
 
         xs = []
         ys = []

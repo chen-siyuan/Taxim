@@ -1,11 +1,12 @@
+import os
+
 import numpy as np
 from matplotlib import pyplot as plt
 from scipy import interpolate
 
 from Basics.sensorParams import H, W, D
-
-from simulation import Simulation
 from ground_truth import GroundTruth
+from simulation import Simulation
 
 
 def fill(image):
@@ -13,7 +14,7 @@ def fill(image):
     values = image[points].ravel()
     xi = np.meshgrid(np.arange(0, image.shape[0]), np.arange(0, image.shape[1]))
     filled = interpolate.griddata(
-        points, values, tuple(xi), method="linear", fill_value=0
+        points, values, tuple(xi), method="nearest", fill_value=0
     ).T
 
     return filled
@@ -65,23 +66,40 @@ def visualize(image, image2=None):
     plt.show()
 
 
-if __name__ == "__main__":
-    GT_DATA = "0630_dome_square_0.5_0.3_0.6"
-    SIM_OBJ = "square"
-    DX = 0.5
-    DY = 0.3
-    DZ = 0.6
+def main_compare_sim_gt():
+    gt_data = "0630_dome_square_0.5_0.3_0.6"
+    sim_obj = "square"
+    dx = 0.5
+    dy = 0.3
+    dz = 0.6
 
     print("PARAMETERS:")
-    print("\tGround truth:\t%s" % GT_DATA)
-    print("\tSimulation:  \t%s %.2f %.2f %.2f" % (SIM_OBJ, DX, DY, DZ))
+    print("\tGround truth:\t%s" % gt_data)
+    print("\tSimulation:  \t%s %.2f %.2f %.2f" % (sim_obj, dx, dy, dz))
     print("")
 
     print("Beginning ground truth digging...")
-    gt_map = GroundTruth.dig(GT_DATA)
+    gt_map = GroundTruth.dig(gt_data)
 
     print("Beginning simulation...")
-    sim_map = Simulation(SIM_OBJ).run(DX, DY, DZ)
+    sim_map = Simulation(sim_obj).run(dx, dy, dz)
 
     print("Beginning visualization...")
     visualize(gt_map, sim_map)
+
+
+def main_extract_gt():
+    gt_path = os.path.join("..", "data", "GT")
+    for gt_data in os.listdir(os.path.join("..", "data", "FEM")):
+        print(gt_data)
+        if input("Extract? (y/N): ") not in {"Y", 'y'}:
+            continue
+        print("Extraction started ...")
+        gt_map = GroundTruth.dig(gt_data)
+        np.save(gt_path + "/" + gt_data, gt_map)
+        print("Extraction successful.")
+
+
+if __name__ == "__main__":
+    # main_extract_gt()
+    pass

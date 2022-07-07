@@ -1,4 +1,4 @@
-import os
+from os import path
 
 import numpy as np
 from scipy.optimize import nnls
@@ -22,7 +22,7 @@ class Superposition:
         is collected and available (representative points, roughly 1%); the mask
         is dense towards the center and sparse towards the boundary
         """
-        fem_data = np.load(os.path.join("..", "calibs", "femCalib.npz"),
+        fem_data = np.load(path.join("..", "calibs", "femCalib.npz"),
                            allow_pickle=True)
         self.tensor_map = fem_data["tensorMap"]
         self.sparse_mask = fem_data["nodeMask"]

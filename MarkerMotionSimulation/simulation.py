@@ -1,4 +1,4 @@
-import os
+from os import path
 
 import numpy as np
 
@@ -9,7 +9,7 @@ from superposition import Superposition
 class Simulation:
     def __init__(self, obj):
         lines = open(
-            os.path.join("..", "data", "objects", "%s.ply" % obj)
+            path.join("..", "data", "objects", "%s.ply" % obj)
         ).readlines()
         vertices = np.array([
             list(map(float, line.strip().split(" ")))
@@ -28,7 +28,7 @@ class Simulation:
         self.height_map[x_scaled[mask], y_scaled[mask]] = vertices[mask, 2]
         self.height_map -= np.max(self.height_map)
         self.height_map *= PPMM
-        self.dome_map = np.load(os.path.join("..", "calibs", "dome_gel.npy"))
+        self.dome_map = np.load(path.join("..", "calibs", "dome_gel.npy"))
 
     def run(self, dx, dy, dz):
         press_depth = dz * PPMM
