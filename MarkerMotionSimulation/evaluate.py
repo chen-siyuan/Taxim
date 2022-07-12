@@ -29,8 +29,8 @@ def crop(image):
     return cropped
 
 
-def visualize(image, image2=None):
-    plt.figure(0)
+def visualize(image, image2=None, text=None, path=None):
+    plt.figure()
 
     xy_width = max(
         abs(np.min(image[:, :, 0])), abs(np.max(image[:, :, 0])),
@@ -71,29 +71,65 @@ def visualize(image, image2=None):
         plt.imshow(crop(fill(image2[:, :, 2].T)), cmap="RdBu", norm=z_norm)
         plt.axis("off")
 
-    plt.show()
+    if text is not None:
+        plt.figtext(0.01, 0.01, text,
+                    fontfamily="monospace")
+
+    if path is None:
+        plt.show()
+    else:
+        plt.savefig(path)
 
 
-def main_compare_sim_gt():
-    gt_data = "0630_dome_triangle_0.0_0.0_0.5"
-    sim_obj = "triangle"
-    dx = 1.0
-    dy = 0.0
-    dz = 0.5
+def parse_experiment(experiment):
+    data = experiment.split("_")
+    gt_data = experiment
+    sim_obj = "_".join(data[2:-3])
+    dx, dy, dz = map(float, data[-3:])
+    return gt_data, sim_obj, dx, dy, dz
 
-    print("PARAMETERS:")
-    print("\tGround truth:\t%s" % gt_data)
-    print("\tSimulation:  \t%s %.2f %.2f %.2f" % (sim_obj, dx, dy, dz))
-    print("")
+
+def perform_experiment(experiment):
+    print("Running experiment: %s" % experiment)
+    gt_data, sim_obj, dx, dy, dz = parse_experiment(experiment)
 
     print("Beginning ground truth digging...")
     gt_map = GroundTruth.dig(gt_data)
 
     print("Beginning simulation...")
-    sim_map = Simulation(sim_obj).run(dx, dy, dz)
+    sim_map = None
+    # sim_map = Simulation(sim_obj).run(dx, dy, dz)
 
     print("Beginning visualization...")
-    visualize(gt_map, sim_map)
+    visualize(gt_map, sim_map, text=experiment,
+              path=os.path.join("..", "data", "plots", "%s.png" % experiment))
+
+    print("")
+
+
+def main_perform_experiments():
+    experiments = [
+        "0630_dome_9_pattern_0.0_0.5_0.5",
+        "0630_dome_9_pattern_0.2_0.2_0.6",
+        "0630_dome_9_pattern_0.2_0.2_1.0",
+        "0630_dome_cylinder6_0.0_0.0_0.5",
+        "0630_dome_dome_0.3_0.4_0.8",
+        "0630_dome_edge_0.0_-0.5_0.5",
+        "0630_dome_grid_0.0_0.0_0.3",
+        "0630_dome_indent_0.0_0.0_0.5",
+        "0630_dome_pyramid_-0.2_0.0_0.4",
+        "0630_dome_side_cylinder2_0.3_0.3_0.6",
+        "0630_dome_side_cylinder3_0.3_0.0_0.7",
+        "0630_dome_side_cylinder5_0.0_0.0_0.8",
+        "0630_dome_side_cylinder5_0.0_0.5_0.8",
+        "0630_dome_square_0.5_0.3_0.6",
+        "0630_dome_star_0.0_0.0_0.5",
+        "0630_dome_star_0.2_0.4_0.4",
+        "0630_dome_stride_0.0_0.0_0.6",
+        "0630_dome_triangle_0.0_0.0_0.5"
+    ]
+    for experiment in experiments:
+        perform_experiment(experiment)
 
 
 def main_extract_gt():
@@ -109,4 +145,4 @@ def main_extract_gt():
 
 
 if __name__ == "__main__":
-    main_compare_sim_gt()
+    main_perform_experiments()
