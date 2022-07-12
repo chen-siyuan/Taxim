@@ -32,35 +32,43 @@ def crop(image):
 def visualize(image, image2=None):
     plt.figure(0)
 
+    xy_width = max(
+        abs(np.min(image[:, :, 0])), abs(np.max(image[:, :, 0])),
+        abs(np.min(image[:, :, 1])), abs(np.max(image[:, :, 1]))
+    )
+    xy_norm = plt.Normalize(-xy_width, xy_width)
+    z_width = max(abs(np.min(image[:, :, 2])), abs(np.max(image[:, :, 2])))
+    z_norm = plt.Normalize(-z_width, z_width)
+
     if image2 is None:
         plt.subplot(3, 1, 1)
-        plt.imshow(crop(fill(image[:, :, 0])), cmap="RdBu")
+        plt.imshow(crop(fill(image[:, :, 0])), cmap="RdBu", norm=xy_norm)
         plt.axis("off")
         plt.subplot(3, 1, 2)
-        plt.imshow(crop(fill(image[:, :, 1])), cmap="RdBu")
+        plt.imshow(crop(fill(image[:, :, 1])), cmap="RdBu", norm=xy_norm)
         plt.axis("off")
         plt.subplot(3, 1, 3)
-        plt.imshow(crop(fill(image[:, :, 2])), cmap="RdBu")
+        plt.imshow(crop(fill(image[:, :, 2])), cmap="RdBu", norm=z_norm)
         plt.axis("off")
     else:
         plt.subplot(3, 2, 1)
-        plt.imshow(crop(fill(image[:, :, 0])), cmap="RdBu")
+        plt.imshow(crop(fill(image[:, :, 0])), cmap="RdBu", norm=xy_norm)
         plt.axis("off")
         plt.subplot(3, 2, 3)
-        plt.imshow(crop(fill(image[:, :, 1])), cmap="RdBu")
+        plt.imshow(crop(fill(image[:, :, 1])), cmap="RdBu", norm=xy_norm)
         plt.axis("off")
         plt.subplot(3, 2, 5)
-        plt.imshow(crop(fill(image[:, :, 2])), cmap="RdBu")
+        plt.imshow(crop(fill(image[:, :, 2])), cmap="RdBu", norm=z_norm)
         plt.axis("off")
 
         plt.subplot(3, 2, 2)
-        plt.imshow(crop(fill(image2[:, :, 0])), cmap="RdBu")
+        plt.imshow(crop(fill(image2[:, :, 0])), cmap="RdBu", norm=xy_norm)
         plt.axis("off")
         plt.subplot(3, 2, 4)
-        plt.imshow(crop(fill(image2[:, :, 1])), cmap="RdBu")
+        plt.imshow(crop(fill(image2[:, :, 1])), cmap="RdBu", norm=xy_norm)
         plt.axis("off")
         plt.subplot(3, 2, 6)
-        plt.imshow(crop(fill(image2[:, :, 2])), cmap="RdBu")
+        plt.imshow(crop(fill(image2[:, :, 2])), cmap="RdBu", norm=z_norm)
         plt.axis("off")
 
     plt.show()
@@ -86,6 +94,7 @@ def main_compare_sim_gt():
 
     print("Beginning visualization...")
     visualize(gt_map, sim_map)
+    # visualize(gt_map)
 
 
 def main_extract_gt():
@@ -101,5 +110,4 @@ def main_extract_gt():
 
 
 if __name__ == "__main__":
-    # main_extract_gt()
-    pass
+    main_compare_sim_gt()
