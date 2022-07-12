@@ -14,7 +14,7 @@ def fill(image):
     values = image[points].ravel()
     xi = np.meshgrid(np.arange(0, image.shape[0]), np.arange(0, image.shape[1]))
     filled = interpolate.griddata(
-        points, values, tuple(xi), method="nearest", fill_value=0
+        points, values, tuple(xi), method="linear", fill_value=0
     ).T
 
     return filled
@@ -42,44 +42,44 @@ def visualize(image, image2=None):
 
     if image2 is None:
         plt.subplot(3, 1, 1)
-        plt.imshow(crop(fill(image[:, :, 0])), cmap="RdBu", norm=xy_norm)
+        plt.imshow(crop(fill(image[:, :, 0].T)), cmap="RdBu", norm=xy_norm)
         plt.axis("off")
         plt.subplot(3, 1, 2)
-        plt.imshow(crop(fill(image[:, :, 1])), cmap="RdBu", norm=xy_norm)
+        plt.imshow(crop(fill(image[:, :, 1].T)), cmap="RdBu", norm=xy_norm)
         plt.axis("off")
         plt.subplot(3, 1, 3)
-        plt.imshow(crop(fill(image[:, :, 2])), cmap="RdBu", norm=z_norm)
+        plt.imshow(crop(fill(image[:, :, 2].T)), cmap="RdBu", norm=z_norm)
         plt.axis("off")
     else:
         plt.subplot(3, 2, 1)
-        plt.imshow(crop(fill(image[:, :, 0])), cmap="RdBu", norm=xy_norm)
+        plt.imshow(crop(fill(image[:, :, 0].T)), cmap="RdBu", norm=xy_norm)
         plt.axis("off")
         plt.subplot(3, 2, 3)
-        plt.imshow(crop(fill(image[:, :, 1])), cmap="RdBu", norm=xy_norm)
+        plt.imshow(crop(fill(image[:, :, 1].T)), cmap="RdBu", norm=xy_norm)
         plt.axis("off")
         plt.subplot(3, 2, 5)
-        plt.imshow(crop(fill(image[:, :, 2])), cmap="RdBu", norm=z_norm)
+        plt.imshow(crop(fill(image[:, :, 2].T)), cmap="RdBu", norm=z_norm)
         plt.axis("off")
 
         plt.subplot(3, 2, 2)
-        plt.imshow(crop(fill(image2[:, :, 0])), cmap="RdBu", norm=xy_norm)
+        plt.imshow(crop(fill(image2[:, :, 0].T)), cmap="RdBu", norm=xy_norm)
         plt.axis("off")
         plt.subplot(3, 2, 4)
-        plt.imshow(crop(fill(image2[:, :, 1])), cmap="RdBu", norm=xy_norm)
+        plt.imshow(crop(fill(image2[:, :, 1].T)), cmap="RdBu", norm=xy_norm)
         plt.axis("off")
         plt.subplot(3, 2, 6)
-        plt.imshow(crop(fill(image2[:, :, 2])), cmap="RdBu", norm=z_norm)
+        plt.imshow(crop(fill(image2[:, :, 2].T)), cmap="RdBu", norm=z_norm)
         plt.axis("off")
 
     plt.show()
 
 
 def main_compare_sim_gt():
-    gt_data = "0630_dome_square_0.5_0.3_0.6"
-    sim_obj = "square"
-    dx = 0.5
-    dy = 0.3
-    dz = 0.6
+    gt_data = "0630_dome_triangle_0.0_0.0_0.5"
+    sim_obj = "triangle"
+    dx = 0.0
+    dy = 0.0
+    dz = 0.5
 
     print("PARAMETERS:")
     print("\tGround truth:\t%s" % gt_data)
@@ -94,7 +94,6 @@ def main_compare_sim_gt():
 
     print("Beginning visualization...")
     visualize(gt_map, sim_map)
-    # visualize(gt_map)
 
 
 def main_extract_gt():
