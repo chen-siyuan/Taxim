@@ -21,16 +21,16 @@ class GroundTruth:
             xs.append(float(line_split[1]) * 1000.0)
             ys.append(float(line_split[2]) * 1000.0)
             zs.append(float(line_split[3]) * 1000.0)
-            dxs.append(float(line_split[4]) * 1000.0)
+            dxs.append(float(line_split[4]) * 1000.0 * PPMM)
         xs = np.array(xs, dtype=float)
         ys = np.array(ys, dtype=float)
         zs = np.array(zs, dtype=float)
         dxs = np.array(dxs, dtype=float)
         dys = np.array(list(
-            float(line.split()[4]) * 1000.0
+            float(line.split()[4]) * 1000.0 * PPMM
             for line in open(y_path).readlines()[1:]), dtype=float)
         dzs = np.array(list(
-            float(line.split()[4]) * 1000.0
+            float(line.split()[4]) * 1000.0 * PPMM
             for line in open(z_path).readlines()[1:]
         ), dtype=float)
 
