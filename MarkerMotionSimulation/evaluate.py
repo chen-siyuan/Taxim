@@ -77,7 +77,7 @@ def visualize(image, image2=None):
 def main_compare_sim_gt():
     gt_data = "0630_dome_triangle_0.0_0.0_0.5"
     sim_obj = "triangle"
-    dx = 0.0
+    dx = 1.0
     dy = 0.0
     dz = 0.5
 

@@ -24,7 +24,8 @@ class Superposition:
         """
         fem_data = np.load(path.join("..", "calibs", "femCalib.npz"),
                            allow_pickle=True)
-        self.tensor_map = fem_data["tensorMap"]
+        # to account for discrepancy between the two xy axis systems
+        self.tensor_map = fem_data["tensorMap"].transpose(1, 0, 2, 3)
         self.sparse_mask = fem_data["nodeMask"]
 
     def propagate_deform(self, xy_deform, contact_mask, gel_map):
@@ -68,8 +69,8 @@ class Superposition:
         matrix = np.zeros((act_num * 3, act_num * 3))
         for i, (x1, y1) in enumerate(zip(act_xs, act_ys)):
             for j, (x2, y2) in enumerate(zip(act_xs, act_ys)):
-                dx = x1 - x2 + D // 2
-                dy = y1 - y2 + D // 2
+                dx = x2 - x1 + D // 2
+                dy = y2 - y1 + D // 2
                 tensor = self.tensor_map[dx, dy, :, :]
                 for k in range(3):
                     for l in range(3):
@@ -91,8 +92,8 @@ class Superposition:
             # "range of effect"; this is essentially placing a DxD square
             # centered at the current point and only considering those that are
             # within its boundaries
-            rel_xs = x - act_xs + D // 2
-            rel_ys = y - act_ys + D // 2
+            rel_xs = act_xs - x + D // 2
+            rel_ys = act_ys - y + D // 2
             mask = (0 <= rel_xs) & (rel_xs < D) & (0 <= rel_ys) & (rel_ys < D)
 
             # retrieve the tensors (k3, 3, 3) and the deformations (k3, 3, 1);
