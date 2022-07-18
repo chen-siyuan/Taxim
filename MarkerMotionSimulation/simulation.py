@@ -19,7 +19,7 @@ class Simulation:
         y_mean = np.mean(vertices[:, 1])
         x_scaled = ((vertices[:, 0] - x_mean) * PPMM + D // 2).astype(int)
         # to account for discrepancy between the two xy axis systems
-        y_scaled = ((- vertices[:, 1] + y_mean) * PPMM + D // 2).astype(int)
+        y_scaled = ((-vertices[:, 1] + y_mean) * PPMM + D // 2).astype(int)
         mask = np.logical_and.reduce((
             0 <= x_scaled, x_scaled < D,
             0 <= y_scaled, y_scaled < D,
@@ -41,6 +41,6 @@ class Simulation:
 
         sp = Superposition()
         xy_deform = np.array([dx * PPMM, dy * PPMM])
-        result_map = sp.propagate_deform(xy_deform, contact_mask, gel_map)
+        result_map, log = sp.propagate_deform(xy_deform, contact_mask, gel_map)
 
-        return result_map
+        return result_map, log

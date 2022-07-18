@@ -7,6 +7,11 @@ from Basics.params import shear_friction, normal_friction
 from Basics.sensorParams import D
 
 
+
+
+import time
+
+
 class Superposition:
     def __init__(self):
         """
@@ -51,6 +56,10 @@ class Superposition:
         @return: result_map: (D, D, 3) array recording the updated, corrected
         deformations for representative points (as described by sparse_mask)
         """
+        # initialize checkpoints
+        time_start = time.time()
+        log = []
+
         # obtain coordinates for all points and for contact points, both of
         # which are two-tuples of (k1,) arrays / (k2,) arrays
         all_xs, all_ys = np.nonzero(self.sparse_mask)
@@ -63,6 +72,9 @@ class Superposition:
         deform_map = np.zeros((D, D, 3))
         deform_map[act_xs, act_ys, 0:2] = xy_deform
         deform_map[:, :, 2] = gel_map
+
+        # checkpoint 0: prior to active points correction
+        log.append(time.time() - time_start)
 
         # first step: correction
         act_num = act_xs.size
@@ -81,11 +93,18 @@ class Superposition:
         for i, (x, y) in enumerate(zip(act_xs, act_ys)):
             for j in range(3):
                 result[i * 3 + j] = deform_map[x, y, j]
+
+        # checkpoint 1: set up input for correction
+        log.append(time.time() - time_start)
+
         # solution = np.linalg.lstsq(matrix, result, rcond=-1)
         solution = nnls(matrix, result)
         for i, (x, y) in enumerate(zip(act_xs, act_ys)):
             for j in range(3):
                 deform_map[x, y, j] = solution[0][i * 3 + j]
+
+        # checkpoint 2: result for correction
+        log.append(time.time() - time_start)
 
         # second step: propagation
         result_map = np.zeros((D, D, 3))
@@ -115,4 +134,7 @@ class Superposition:
             total_displacements = np.sum(indiv_displacements, axis=0)
             result_map[x, y, :] = total_displacements.squeeze()
 
-        return result_map
+        # checkpoint 3: after general propagation
+        log.append(time.time() - time_start)
+
+        return result_map, log

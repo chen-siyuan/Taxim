@@ -97,11 +97,16 @@ def perform_experiment(experiment):
     gt_map = GroundTruth.dig(gt_data)
 
     print("Beginning simulation...")
-    sim_map = Simulation(sim_obj).run(dx, dy, dz)
+    sim_map, log = Simulation(sim_obj).run(dx, dy, dz)
+    text = "%s - (%.2f %.2f %.2f %.2f)" % (experiment,
+                                           log[0],
+                                           log[1] - log[0],
+                                           log[2] - log[1],
+                                           log[3] - log[2])
+    path = os.path.join("..", "data", "plots", "%s.png" % experiment)
 
     print("Beginning visualization...")
-    visualize(gt_map, sim_map, text=experiment,
-              path=os.path.join("..", "data", "plots", "%s.png" % experiment))
+    visualize(gt_map, sim_map, text=text, path=path)
 
     print("")
 
