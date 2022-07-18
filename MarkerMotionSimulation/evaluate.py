@@ -97,8 +97,7 @@ def perform_experiment(experiment):
     gt_map = GroundTruth.dig(gt_data)
 
     print("Beginning simulation...")
-    sim_map = None
-    # sim_map = Simulation(sim_obj).run(dx, dy, dz)
+    sim_map = Simulation(sim_obj).run(dx, dy, dz)
 
     print("Beginning visualization...")
     visualize(gt_map, sim_map, text=experiment,
@@ -109,9 +108,9 @@ def perform_experiment(experiment):
 
 def main_perform_experiments():
     experiments = [
-        "0630_dome_9_pattern_0.0_0.5_0.5",
-        "0630_dome_9_pattern_0.2_0.2_0.6",
-        "0630_dome_9_pattern_0.2_0.2_1.0",
+        # "0630_dome_9_pattern_0.0_0.5_0.5", (seems to be mislabeled)
+        # "0630_dome_9_pattern_0.2_0.2_0.6", (not pronounced enough)
+        # "0630_dome_9_pattern_0.2_0.2_1.0", (not pronounced enough)
         "0630_dome_cylinder6_0.0_0.0_0.5",
         "0630_dome_dome_0.3_0.4_0.8",
         "0630_dome_edge_0.0_-0.5_0.5",
@@ -119,7 +118,7 @@ def main_perform_experiments():
         "0630_dome_indent_0.0_0.0_0.5",
         "0630_dome_pyramid_-0.2_0.0_0.4",
         "0630_dome_side_cylinder2_0.3_0.3_0.6",
-        "0630_dome_side_cylinder3_0.3_0.0_0.7",
+        # "0630_dome_side_cylinder3_0.3_0.0_0.7", (seems to be mislabeled)
         "0630_dome_side_cylinder5_0.0_0.0_0.8",
         "0630_dome_side_cylinder5_0.0_0.5_0.8",
         "0630_dome_square_0.5_0.3_0.6",

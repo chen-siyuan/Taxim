@@ -71,7 +71,9 @@ class Superposition:
             for j, (x2, y2) in enumerate(zip(act_xs, act_ys)):
                 dx = x2 - x1 + D // 2
                 dy = y2 - y1 + D // 2
-                tensor = self.tensor_map[dx, dy, :, :]
+                tensor = np.zeros((3, 3))
+                if 0 <= dx < 900 and 0 <= dy < 900:
+                    tensor = self.tensor_map[dx, dy, :, :]
                 for k in range(3):
                     for l in range(3):
                         matrix[i * 3 + k, j * 3 + l] = tensor[k, l]
