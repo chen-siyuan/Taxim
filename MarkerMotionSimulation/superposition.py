@@ -1,7 +1,6 @@
 from os import path
 
 import numpy as np
-from scipy.optimize import nnls
 
 from Basics.params import shear_friction, normal_friction
 from Basics.sensorParams import D
@@ -97,8 +96,8 @@ class Superposition:
         # checkpoint 1: set up input for correction
         log.append(time.time() - time_start)
 
-        # solution = np.linalg.lstsq(matrix, result, rcond=-1)
-        solution = nnls(matrix, result)
+        solution = np.linalg.lstsq(matrix, result, rcond=None)
+        # solution = nnls(matrix, result)
         for i, (x, y) in enumerate(zip(act_xs, act_ys)):
             for j in range(3):
                 deform_map[x, y, j] = solution[0][i * 3 + j]
