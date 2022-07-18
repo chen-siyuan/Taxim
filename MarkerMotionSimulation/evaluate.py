@@ -93,7 +93,7 @@ def perform_experiment(experiment):
     print("Running experiment: %s" % experiment)
     gt_data, sim_obj, dx, dy, dz = parse_experiment(experiment)
 
-    print("Beginning ground truth digging...")
+    print("Digging ground truth...")
     gt_map = GroundTruth.dig(gt_data)
 
     print("Beginning simulation...")
@@ -103,10 +103,14 @@ def perform_experiment(experiment):
                                            log[1] - log[0],
                                            log[2] - log[1],
                                            log[3] - log[2])
-    path = os.path.join("..", "data", "plots", "%s.png" % experiment)
 
-    print("Beginning visualization...")
-    visualize(gt_map, sim_map, text=text, path=path)
+    print("Visualizing...")
+    visualize(gt_map, sim_map, text=text,
+              path=os.path.join("..", "data", "plots", "%s.png" % experiment))
+
+    print("Saving results...")
+    np.savez(os.path.join("..", "data", "output", "%s.npz" % experiment),
+             sim_map=sim_map, log=log)
 
     print("")
 
