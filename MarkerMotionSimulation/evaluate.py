@@ -94,20 +94,20 @@ def perform_experiment(experiment):
 
 def main():
     experiments = [
-        # "0630_dome_cylinder6_0.0_0.0_0.5",
-        # "0630_dome_dome_0.3_0.4_0.8",
-        # "0630_dome_edge_0.0_-0.5_0.5",
-        # "0630_dome_grid_0.0_0.0_0.3",
-        # "0630_dome_indent_0.0_0.0_0.5",
-        # "0630_dome_pyramid_-0.2_0.0_0.4",
-        # "0630_dome_side_cylinder2_0.3_0.3_0.6",
-        # "0630_dome_side_cylinder5_0.0_0.0_0.8",
-        # "0630_dome_side_cylinder5_0.0_0.5_0.8",
+        "0630_dome_cylinder6_0.0_0.0_0.5",
+        "0630_dome_dome_0.3_0.4_0.8",
+        "0630_dome_edge_0.0_-0.5_0.5",
+        "0630_dome_grid_0.0_0.0_0.3",
+        "0630_dome_indent_0.0_0.0_0.5",
+        "0630_dome_pyramid_-0.2_0.0_0.4",
+        "0630_dome_side_cylinder2_0.3_0.3_0.6",
+        "0630_dome_side_cylinder5_0.0_0.0_0.8",
+        "0630_dome_side_cylinder5_0.0_0.5_0.8",
         "0630_dome_square_0.5_0.3_0.6"
-        # "0630_dome_star_0.0_0.0_0.5",
-        # "0630_dome_star_0.2_0.4_0.4",
-        # "0630_dome_stride_0.0_0.0_0.6",
-        # "0630_dome_triangle_0.0_0.0_0.5"
+        "0630_dome_star_0.0_0.0_0.5",
+        "0630_dome_star_0.2_0.4_0.4",
+        "0630_dome_stride_0.0_0.0_0.6",
+        "0630_dome_triangle_0.0_0.0_0.5",
     ]
     for experiment in experiments:
         perform_experiment(experiment)
