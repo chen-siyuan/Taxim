@@ -29,51 +29,28 @@ def crop(image):
     return cropped
 
 
-def visualize(image, image2=None, text=None, path=None):
+def visualize(gt_map, sim_map, text=None, path=None):
     plt.figure()
 
     xy_width = max(
-        abs(np.min(image[:, :, 0])), abs(np.max(image[:, :, 0])),
-        abs(np.min(image[:, :, 1])), abs(np.max(image[:, :, 1]))
+        abs(np.min(gt_map[:, :, 0])), abs(np.max(gt_map[:, :, 0])),
+        abs(np.min(gt_map[:, :, 1])), abs(np.max(gt_map[:, :, 1]))
     )
     xy_norm = plt.Normalize(-xy_width, xy_width)
-    z_width = max(abs(np.min(image[:, :, 2])), abs(np.max(image[:, :, 2])))
+    z_width = max(abs(np.min(gt_map[:, :, 2])), abs(np.max(gt_map[:, :, 2])))
     z_norm = plt.Normalize(-z_width, z_width)
+    norms = [xy_norm, xy_norm, z_norm]
 
-    if image2 is None:
-        plt.subplot(3, 1, 1)
-        plt.imshow(crop(fill(image[:, :, 0].T)), cmap="RdBu", norm=xy_norm)
+    for i in range(3):
+        plt.subplot(3, 2, i * 2 + 1)
+        plt.imshow(crop(fill(gt_map[:, :, i].T)), cmap="RdBu", norm=norms[i])
         plt.axis("off")
-        plt.subplot(3, 1, 2)
-        plt.imshow(crop(fill(image[:, :, 1].T)), cmap="RdBu", norm=xy_norm)
-        plt.axis("off")
-        plt.subplot(3, 1, 3)
-        plt.imshow(crop(fill(image[:, :, 2].T)), cmap="RdBu", norm=z_norm)
-        plt.axis("off")
-    else:
-        plt.subplot(3, 2, 1)
-        plt.imshow(crop(fill(image[:, :, 0].T)), cmap="RdBu", norm=xy_norm)
-        plt.axis("off")
-        plt.subplot(3, 2, 3)
-        plt.imshow(crop(fill(image[:, :, 1].T)), cmap="RdBu", norm=xy_norm)
-        plt.axis("off")
-        plt.subplot(3, 2, 5)
-        plt.imshow(crop(fill(image[:, :, 2].T)), cmap="RdBu", norm=z_norm)
-        plt.axis("off")
-
-        plt.subplot(3, 2, 2)
-        plt.imshow(crop(fill(image2[:, :, 0].T)), cmap="RdBu", norm=xy_norm)
-        plt.axis("off")
-        plt.subplot(3, 2, 4)
-        plt.imshow(crop(fill(image2[:, :, 1].T)), cmap="RdBu", norm=xy_norm)
-        plt.axis("off")
-        plt.subplot(3, 2, 6)
-        plt.imshow(crop(fill(image2[:, :, 2].T)), cmap="RdBu", norm=z_norm)
+        plt.subplot(3, 2, i * 2 + 2)
+        plt.imshow(crop(fill(sim_map[:, :, i].T)), cmap="RdBu", norm=norms[i])
         plt.axis("off")
 
     if text is not None:
-        plt.figtext(0.01, 0.01, text,
-                    fontfamily="monospace")
+        plt.figtext(0.01, 0.01, text, fontfamily="monospace")
 
     if path is None:
         plt.show()
@@ -115,11 +92,8 @@ def perform_experiment(experiment):
     print("")
 
 
-def main_perform_experiments():
+def main():
     experiments = [
-        # "0630_dome_9_pattern_0.0_0.5_0.5", (seems to be mislabeled)
-        # "0630_dome_9_pattern_0.2_0.2_0.6", (not pronounced enough)
-        # "0630_dome_9_pattern_0.2_0.2_1.0", (not pronounced enough)
         # "0630_dome_cylinder6_0.0_0.0_0.5",
         # "0630_dome_dome_0.3_0.4_0.8",
         # "0630_dome_edge_0.0_-0.5_0.5",
@@ -127,10 +101,9 @@ def main_perform_experiments():
         # "0630_dome_indent_0.0_0.0_0.5",
         # "0630_dome_pyramid_-0.2_0.0_0.4",
         # "0630_dome_side_cylinder2_0.3_0.3_0.6",
-        # "0630_dome_side_cylinder3_0.3_0.0_0.7", (seems to be mislabeled)
-        "0630_dome_side_cylinder5_0.0_0.0_0.8",
-        "0630_dome_side_cylinder5_0.0_0.5_0.8",
-        # "0630_dome_square_0.5_0.3_0.6"
+        # "0630_dome_side_cylinder5_0.0_0.0_0.8",
+        # "0630_dome_side_cylinder5_0.0_0.5_0.8",
+        "0630_dome_square_0.5_0.3_0.6"
         # "0630_dome_star_0.0_0.0_0.5",
         # "0630_dome_star_0.2_0.4_0.4",
         # "0630_dome_stride_0.0_0.0_0.6",
@@ -140,17 +113,5 @@ def main_perform_experiments():
         perform_experiment(experiment)
 
 
-def main_extract_gt():
-    gt_path = os.path.join("..", "data", "GT")
-    for gt_data in os.listdir(os.path.join("..", "data", "FEM")):
-        print(gt_data)
-        if input("Extract? (y/N): ") not in {"Y", 'y'}:
-            continue
-        print("Extraction started ...")
-        gt_map = GroundTruth.dig(gt_data)
-        np.save(gt_path + "/" + gt_data, gt_map)
-        print("Extraction successful.")
-
-
 if __name__ == "__main__":
-    main_perform_experiments()
+    main()
