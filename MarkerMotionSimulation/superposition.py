@@ -5,7 +5,7 @@ import numpy as np
 from scipy.optimize import nnls
 
 from Basics.params import shear_friction, normal_friction
-from Basics.sensorParams import PPMM, D
+from Basics.sensorParams import D
 
 
 class Superposition:
