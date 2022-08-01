@@ -103,7 +103,7 @@ def main():
         "0630_dome_side_cylinder2_0.3_0.3_0.6",
         "0630_dome_side_cylinder5_0.0_0.0_0.8",
         "0630_dome_side_cylinder5_0.0_0.5_0.8",
-        "0630_dome_square_0.5_0.3_0.6"
+        "0630_dome_square_0.5_0.3_0.6",
         "0630_dome_star_0.0_0.0_0.5",
         "0630_dome_star_0.2_0.4_0.4",
         "0630_dome_stride_0.0_0.0_0.6",

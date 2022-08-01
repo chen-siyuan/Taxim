@@ -37,7 +37,7 @@ class Superposition:
                 dy = y2 - y1 + D // 2
                 tensor = np.zeros((3, 3))
                 if 0 <= dx < 900 and 0 <= dy < 900:
-                    tensor = self.tensor_map[dx, dy, :, :]
+                    tensor = self.tensor_map[dx, dy]
                 for k in range(3):
                     matrices[i, j, k] = tensor[k, k]
 
