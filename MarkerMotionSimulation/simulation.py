@@ -18,7 +18,6 @@ class Simulation:
         x_mean = np.mean(vertices[:, 0])
         y_mean = np.mean(vertices[:, 1])
         x_scaled = ((vertices[:, 0] - x_mean) * PPMM + D // 2).astype(int)
-        # to account for discrepancy between the two xy axis systems
         y_scaled = ((-vertices[:, 1] + y_mean) * PPMM + D // 2).astype(int)
         mask = np.logical_and.reduce((
             0 <= x_scaled, x_scaled < D,

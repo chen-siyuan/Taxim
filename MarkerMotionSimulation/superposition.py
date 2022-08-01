@@ -1,81 +1,35 @@
+import time
 from os import path
 
 import numpy as np
+from scipy.optimize import nnls
 
 from Basics.params import shear_friction, normal_friction
-from Basics.sensorParams import D
-
-
-
-
-import time
+from Basics.sensorParams import PPMM, D
 
 
 class Superposition:
     def __init__(self):
-        """
-        Prepares tensor map and sparse mask for deformation propagation
-
-        tensor_map: (D, D, 3, 3) array recording mutual deformation tensors; we
-        make the assumption that the effect of the linear displacement
-        relationship only depends on relative positions, which allows us to use
-        a center-calibrated (values are from the perspective of the center) DxD
-        tensor map rather than needing two locations inputs (DxDxDxD)
-
-        sparse_mask: (D, D) array indicating points at which calibration data
-        is collected and available (representative points, roughly 1%); the mask
-        is dense towards the center and sparse towards the boundary
-        """
         fem_data = np.load(path.join("..", "calibs", "femCalib.npz"),
                            allow_pickle=True)
-        # to account for discrepancy between the two xy axis systems
         self.tensor_map = fem_data["tensorMap"].transpose(1, 0, 2, 3)
         self.sparse_mask = fem_data["nodeMask"]
 
     def propagate_deform(self, xy_deform, contact_mask, gel_map):
-        """
-        Propagates deformations through all points after correction of active
-        points' deformations
-
-        Initial deformations for active points are composed of x and y values in
-        raw_deform and the z values in gel_map; then "virtual loads" are
-        computed using non-negative least squares (directly applying the
-        superposition principle results in excessive deformation); the virtual
-        loads are then used to propagate deformations to all points--individual
-        tensors are obtained through relative positions and then multiplied with
-        respective deformations; the individual displacements are then summed to
-        produce the final deformation
-
-        @param xy_deform: (2,) array recording the raw x and y deformations, in
-        pixels
-        @param contact_mask: (D, D) array indicating points at which the object
-        is in contact with the gelpad
-        @param gel_map: (D, D) array representing the raw z deformations, in
-        pixels
-        @return: result_map: (D, D, 3) array recording the updated, corrected
-        deformations for representative points (as described by sparse_mask)
-        """
-        # initialize checkpoints
         time_start = time.time()
         log = []
 
-        # obtain coordinates for all points and for contact points, both of
-        # which are two-tuples of (k1,) arrays / (k2,) arrays
         all_xs, all_ys = np.nonzero(self.sparse_mask)
         act_xs, act_ys = np.nonzero(np.logical_and(
             self.sparse_mask, contact_mask
         ))
 
-        # initialize deform_map (D, D, 3) with x, y values from raw_deform and
-        # z values from gel_map
         deform_map = np.zeros((D, D, 3))
         deform_map[act_xs, act_ys, 0:2] = xy_deform
         deform_map[:, :, 2] = gel_map
 
-        # checkpoint 0: prior to active points correction
         log.append(time.time() - time_start)
 
-        # first step: correction
         act_num = act_xs.size
         matrix = np.zeros((act_num * 3, act_num * 3))
         for i, (x1, y1) in enumerate(zip(act_xs, act_ys)):
@@ -93,47 +47,30 @@ class Superposition:
             for j in range(3):
                 result[i * 3 + j] = deform_map[x, y, j]
 
-        # checkpoint 1: set up input for correction
         log.append(time.time() - time_start)
 
-        solution = np.linalg.lstsq(matrix, result, rcond=None)
-        # solution = nnls(matrix, result)
+        solution = nnls(matrix, result)[0]
         for i, (x, y) in enumerate(zip(act_xs, act_ys)):
             for j in range(3):
-                deform_map[x, y, j] = solution[0][i * 3 + j]
+                deform_map[x, y, j] = solution[i * 3 + j]
 
-        # checkpoint 2: result for correction
         log.append(time.time() - time_start)
 
-        # second step: propagation
         result_map = np.zeros((D, D, 3))
         for x, y in zip(all_xs, all_ys):
-            # obtain the mask (D, D) for contact points that are within the
-            # "range of effect"; this is essentially placing a DxD square
-            # centered at the current point and only considering those that are
-            # within its boundaries
             rel_xs = act_xs - x + D // 2
             rel_ys = act_ys - y + D // 2
             mask = (0 <= rel_xs) & (rel_xs < D) & (0 <= rel_ys) & (rel_ys < D)
 
-            # retrieve the tensors (k3, 3, 3) and the deformations (k3, 3, 1);
-            # the new axis is needed for matrix multiplication; note that the
-            # tensors are retrieved through relative positions whereas the
-            # deformations are retrieved through absolute positions; k3 refers
-            # to the number of active points in range
             tensors = self.tensor_map[rel_xs[mask], rel_ys[mask], :, :]
             tensors[:, 0:2, 0:2] *= shear_friction
             tensors[:, 0:2, 2] *= normal_friction
             deforms = deform_map[act_xs[mask], act_ys[mask], :, np.newaxis]
 
-            # calculate individual (k3, 3, 1) and total (3, 1) displacements
-            # resulting from the effect of the active points; squeeze is needed
-            # to fit within (3,) shape
             indiv_displacements = np.matmul(tensors, deforms)
             total_displacements = np.sum(indiv_displacements, axis=0)
             result_map[x, y, :] = total_displacements.squeeze()
 
-        # checkpoint 3: after general propagation
         log.append(time.time() - time_start)
 
         return result_map, log
