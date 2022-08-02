@@ -33,6 +33,8 @@ class Superposition:
         matrices = np.zeros((act_xs.size, act_ys.size, 3))
         for i, (x1, y1) in enumerate(zip(act_xs, act_ys)):
             for j, (x2, y2) in enumerate(zip(act_xs, act_ys)):
+                if j > i:
+                    break
                 dx = x2 - x1 + D // 2
                 dy = y2 - y1 + D // 2
                 tensor = np.zeros((3, 3))
@@ -40,6 +42,7 @@ class Superposition:
                     tensor = self.tensor_map[dx, dy]
                 for k in range(3):
                     matrices[i, j, k] = tensor[k, k]
+                    matrices[j, i, k] = tensor[k, k]
 
         log.append(time.time() - time_start)
 
