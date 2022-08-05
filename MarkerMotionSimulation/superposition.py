@@ -28,6 +28,9 @@ class Superposition:
         deform_map[:, :, 0:2] = xy_deform
         deform_map[:, :, 2] = gel_map
 
+        lower = D // 4
+        upper = D // 4 * 3
+
         log.append(time.time() - time_start)
 
         matrices = np.zeros((act_xs.size, act_ys.size, 3))
@@ -38,7 +41,7 @@ class Superposition:
                 dx = x2 - x1 + D // 2
                 dy = y2 - y1 + D // 2
                 tensor = np.zeros((3, 3))
-                if 0 <= dx < 900 and 0 <= dy < 900:
+                if lower <= dx < upper and lower <= dy < upper:
                     tensor = self.tensor_map[dx, dy]
                 for k in range(3):
                     matrices[i, j, k] = tensor[k, k]
