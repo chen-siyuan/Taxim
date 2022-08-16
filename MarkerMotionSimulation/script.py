@@ -1,20 +1,82 @@
-#  import numpy as np
-#  from matplotlib import pyplot as plt
-#  import seaborn as sns
+from matplotlib import pyplot as plt
+import numpy as np
 
-#  tensor_map = np.load(
-        #  "../calibs/femCalib.npz",
-        #  allow_pickle=True
-        #  )["tensorMap"].transpose(1, 0, 2, 3)
+from evaluate import crop, fill
 
-#  for i in range(3):
-    #  for j in range(3):
-        #  plt.subplot(3, 3, i * 3 + j + 1)
-        #  sns.heatmap(abs(tensor_map[:, :, i, j]) > np.max(tensor_map[:, :, i, j]) * 0.01)
-        #  plt.axis("off")
 
-#  plt.show()
+experiments = [
+        "0630_dome_cylinder6_0.0_0.0_0.5",
+        "0630_dome_dome_0.3_0.4_0.8",
+        "0630_dome_edge_0.0_0.5_0.5",
+        "0630_dome_grid_0.0_0.0_0.3",
+        "0630_dome_indent_0.0_0.0_0.5",
+        "0630_dome_pyramid_-0.2_0.0_0.4",
+        "0630_dome_side_cylinder2_0.3_0.3_0.6",
+        "0630_dome_side_cylinder5_0.0_0.0_0.8",
+        "0630_dome_side_cylinder5_0.0_0.5_0.8",
+        "0630_dome_square_0.5_0.3_0.6",
+        "0630_dome_star_0.0_0.0_0.5",
+        "0630_dome_star_0.2_0.4_0.4",
+        "0630_dome_stride_0.0_0.0_0.6",
+        "0630_dome_triangle_0.0_0.0_0.5",
+        ]
+path_old = "../data/output/0816/output_old/"
+path_new = "../data/output/0816/output_new/"
 
-#  gel_map = np.load("GM.npy").transpose(1, 0);
-#  sns.heatmap(gel_map)
-#  plt.savefig("heatmap")
+for experiment in experiments:
+    npz_old = np.load(path_old + experiment + ".npz")
+    npz_new = np.load(path_new + experiment + ".npz")
+
+    gt = npz_old["gt_map"]
+    assert((gt == npz_new["gt_map"]).all())
+    old = npz_old["sim_map"]
+    new = npz_new["sim_map"]
+
+    xy_width = max(
+            abs(np.min(gt[:, :, 0])), abs(np.max(gt[:, :, 0])),
+            abs(np.min(gt[:, :, 1])), abs(np.max(gt[:, :, 1]))
+            )
+    xy_norm = plt.Normalize(-xy_width, xy_width)
+    z_width = max(abs(np.min(gt[:, :, 2])), abs(np.max(gt[:, :, 2])))
+    z_norm = plt.Normalize(-z_width, z_width)
+    norms = [xy_norm, xy_norm, z_norm]
+
+    plt.figure()
+
+    for i in range(3):
+        plt.subplot(3, 5, i * 5 + 1)
+        plt.imshow(crop(fill(gt[:, :, i].T)), cmap="RdBu", norm=norms[i])
+        plt.axis("off")
+        plt.subplot(3, 5, i * 5 + 2)
+        plt.imshow(crop(fill(old[:, :, i].T)), cmap="RdBu", norm=norms[i])
+        plt.axis("off")
+        plt.subplot(3, 5, i * 5 + 3)
+        plt.imshow(crop(fill(new[:, :, i].T)), cmap="RdBu", norm=norms[i])
+        plt.axis("off")
+        plt.subplot(3, 5, i * 5 + 4)
+        plt.imshow((
+            crop(fill(new[:, :, i].T))
+            - crop(fill(old[:, :, i].T))
+            ) * 10, cmap="RdBu", norm=norms[i])
+        plt.axis("off")
+        plt.subplot(3, 5, i * 5 + 5)
+        plt.imshow((
+            crop(fill(new[:, :, i].T))
+            - crop(fill(old[:, :, i].T))
+            ) * 100, cmap="RdBu", norm=norms[i])
+        plt.axis("off")
+
+    log_old = npz_old["log"]
+    log_new = npz_new["log"]
+
+    text = "%s - (%.2f %.2f %.2f %.2f) - (%.2f %.2f %.2f %.2f)" % (
+            experiment[10:],
+            log_old[0], log_old[1] - log_old[0],
+            log_old[2] - log_old[1], log_old[3] - log_old[2],
+            log_new[0], log_new[1] - log_new[0],
+            log_new[2] - log_new[1], log_new[3] - log_new[2]
+            )
+
+    plt.figtext(0.01, 0.01, text, fontfamily="monospace")
+
+    plt.savefig("../data/%s.png" % experiment)
