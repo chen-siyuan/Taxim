@@ -28,16 +28,18 @@ class Superposition:
         deform_map[:, :, 0:2] = xy_deform
         deform_map[:, :, 2] = gel_map
 
-        lower = D // 4
-        upper = D // 4 * 3
+        # lower = D // 4
+        # upper = D // 4 * 3
+        lower = 0
+        upper = D
 
         log.append(time.time() - time_start)
 
         matrices = np.zeros((act_xs.size, act_ys.size, 3))
         for i, (x1, y1) in enumerate(zip(act_xs, act_ys)):
             for j, (x2, y2) in enumerate(zip(act_xs, act_ys)):
-                if j > i:
-                    break
+                # if j > i:
+                #     break
                 dx = x2 - x1 + D // 2
                 dy = y2 - y1 + D // 2
                 tensor = np.zeros((3, 3))
