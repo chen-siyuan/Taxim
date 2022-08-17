@@ -23,60 +23,73 @@ experiments = [
 path_old = "../data/output/0816/output_old/"
 path_new = "../data/output/0816/output_new/"
 
-for experiment in experiments:
-    npz_old = np.load(path_old + experiment + ".npz")
-    npz_new = np.load(path_new + experiment + ".npz")
 
-    gt = npz_old["gt_map"]
-    assert((gt == npz_new["gt_map"]).all())
-    old = npz_old["sim_map"]
-    new = npz_new["sim_map"]
+def main_diff():
+    for experiment in experiments:
+        npz_old = np.load(path_old + experiment + ".npz")
+        npz_new = np.load(path_new + experiment + ".npz")
 
-    xy_width = max(
-            abs(np.min(gt[:, :, 0])), abs(np.max(gt[:, :, 0])),
-            abs(np.min(gt[:, :, 1])), abs(np.max(gt[:, :, 1]))
-            )
-    xy_norm = plt.Normalize(-xy_width, xy_width)
-    z_width = max(abs(np.min(gt[:, :, 2])), abs(np.max(gt[:, :, 2])))
-    z_norm = plt.Normalize(-z_width, z_width)
-    norms = [xy_norm, xy_norm, z_norm]
+        gt = npz_old["gt_map"]
+        assert((gt == npz_new["gt_map"]).all())
+        old = npz_old["sim_map"]
+        new = npz_new["sim_map"]
 
-    plt.figure()
+        xy_width = max(
+                abs(np.min(gt[:, :, 0])), abs(np.max(gt[:, :, 0])),
+                abs(np.min(gt[:, :, 1])), abs(np.max(gt[:, :, 1]))
+                )
+        xy_norm = plt.Normalize(-xy_width, xy_width)
+        z_width = max(abs(np.min(gt[:, :, 2])), abs(np.max(gt[:, :, 2])))
+        z_norm = plt.Normalize(-z_width, z_width)
+        norms = [xy_norm, xy_norm, z_norm]
 
-    for i in range(3):
-        plt.subplot(3, 5, i * 5 + 1)
-        plt.imshow(crop(fill(gt[:, :, i].T)), cmap="RdBu", norm=norms[i])
-        plt.axis("off")
-        plt.subplot(3, 5, i * 5 + 2)
-        plt.imshow(crop(fill(old[:, :, i].T)), cmap="RdBu", norm=norms[i])
-        plt.axis("off")
-        plt.subplot(3, 5, i * 5 + 3)
-        plt.imshow(crop(fill(new[:, :, i].T)), cmap="RdBu", norm=norms[i])
-        plt.axis("off")
-        plt.subplot(3, 5, i * 5 + 4)
-        plt.imshow((
-            crop(fill(new[:, :, i].T))
-            - crop(fill(old[:, :, i].T))
-            ) * 10, cmap="RdBu", norm=norms[i])
-        plt.axis("off")
-        plt.subplot(3, 5, i * 5 + 5)
-        plt.imshow((
-            crop(fill(new[:, :, i].T))
-            - crop(fill(old[:, :, i].T))
-            ) * 100, cmap="RdBu", norm=norms[i])
-        plt.axis("off")
+        plt.figure()
 
-    log_old = npz_old["log"]
-    log_new = npz_new["log"]
+        for i in range(3):
+            plt.subplot(3, 5, i * 5 + 1)
+            plt.imshow(crop(fill(gt[:, :, i].T)), cmap="RdBu", norm=norms[i])
+            plt.axis("off")
+            plt.subplot(3, 5, i * 5 + 2)
+            plt.imshow(crop(fill(old[:, :, i].T)), cmap="RdBu", norm=norms[i])
+            plt.axis("off")
+            plt.subplot(3, 5, i * 5 + 3)
+            plt.imshow(crop(fill(new[:, :, i].T)), cmap="RdBu", norm=norms[i])
+            plt.axis("off")
+            plt.subplot(3, 5, i * 5 + 4)
+            plt.imshow((
+                crop(fill(new[:, :, i].T))
+                - crop(fill(old[:, :, i].T))
+                ) * 10, cmap="RdBu", norm=norms[i])
+            plt.axis("off")
+            plt.subplot(3, 5, i * 5 + 5)
+            plt.imshow((
+                crop(fill(new[:, :, i].T))
+                - crop(fill(old[:, :, i].T))
+                ) * 100, cmap="RdBu", norm=norms[i])
+            plt.axis("off")
 
-    text = "%s - (%.2f %.2f %.2f %.2f) - (%.2f %.2f %.2f %.2f)" % (
-            experiment[10:],
-            log_old[0], log_old[1] - log_old[0],
-            log_old[2] - log_old[1], log_old[3] - log_old[2],
-            log_new[0], log_new[1] - log_new[0],
-            log_new[2] - log_new[1], log_new[3] - log_new[2]
-            )
+        log_old = npz_old["log"]
+        log_new = npz_new["log"]
 
-    plt.figtext(0.01, 0.01, text, fontfamily="monospace")
+        text = "%s - (%.2f %.2f %.2f %.2f) - (%.2f %.2f %.2f %.2f)" % (
+                experiment[10:],
+                log_old[0], log_old[1] - log_old[0],
+                log_old[2] - log_old[1], log_old[3] - log_old[2],
+                log_new[0], log_new[1] - log_new[0],
+                log_new[2] - log_new[1], log_new[3] - log_new[2]
+                )
+        header = ("         Ground      Old         New          New - Old   New - Old\n"
+                + "         truth       simulation  simulation         10x        100x")
 
-    plt.savefig("../data/%s.png" % experiment)
+        plt.figtext(0.01, 0.01, text, fontfamily="monospace")
+        plt.figtext(0.01, 0.85, header, fontfamily="monospace")
+
+        plt.savefig("../data/%s.png" % experiment)
+
+
+def main_time():
+    pass
+
+
+if __name__ == "__main__":
+    main_time()
