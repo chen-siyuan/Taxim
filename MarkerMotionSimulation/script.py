@@ -1,7 +1,10 @@
 from matplotlib import pyplot as plt
 import numpy as np
+import seaborn as sns
 
 from evaluate import crop, fill
+
+import pandas as pd
 
 
 experiments = [
@@ -88,8 +91,92 @@ def main_diff():
 
 
 def main_time():
-    pass
+    df_old = {"old sim": [], "precompute": [], "set up NNLS": [], "run NNLS": [], "propagate": []}
+    df_new = {"new sim": [], "precompute": [], "set up NNLS": [], "run NNLS": [], "propagate": []}
+
+    for experiment in experiments:
+        npz_old = np.load(path_old + experiment + ".npz")
+        npz_new = np.load(path_new + experiment + ".npz")
+
+        old = npz_old["log"]
+        new = npz_new["log"]
+
+        df_old["old sim"].append(experiment[10:-12])
+        df_old["precompute"].append(old[0])
+        df_old["set up NNLS"].append(old[1] - old[0])
+        df_old["run NNLS"].append(old[2] - old[1])
+        df_old["propagate"].append(old[3] - old[2])
+
+        df_new["new sim"].append(experiment[10:-12])
+        df_new["precompute"].append(new[0])
+        df_new["set up NNLS"].append(new[1] - new[0])
+        df_new["run NNLS"].append(new[2] - new[1])
+        df_new["propagate"].append(new[3] - new[2])
+
+    df_old = pd.DataFrame.from_dict(df_old)
+    df_new = pd.DataFrame.from_dict(df_new)
+
+    _, axes = plt.subplots(2, 1)
+
+    df_old.set_index("old sim").plot(kind="barh", stacked=True, ax=axes[0], xlim=(0, 40), colormap="crest")
+    df_new.set_index("new sim").plot(kind="barh", stacked=True, ax=axes[1], xlim=(0, 40), colormap="crest")
+
+    plt.show()
+
+
+def main_prop():
+    df_old = {"precompute": 0., "set up NNLS": 0., "run NNLS": 0., "propagate": 0.}
+    df_new = {"precompute": 0., "set up NNLS": 0., "run NNLS": 0., "propagate": 0.}
+
+    for experiment in experiments:
+        npz_old = np.load(path_old + experiment + ".npz")
+        npz_new = np.load(path_new + experiment + ".npz")
+
+        old = npz_old["log"]
+        new = npz_new["log"]
+
+        df_old["precompute"] += old[0]
+        df_old["set up NNLS"] += old[1] - old[0]
+        df_old["run NNLS"] += old[2] - old[1]
+        df_old["propagate"] += old[3] - old[2]
+
+        df_new["precompute"] += new[0]
+        df_new["set up NNLS"] += new[1] - new[0]
+        df_new["run NNLS"] += new[2] - new[1]
+        df_new["propagate"] += new[3] - new[2]
+
+    df = pd.DataFrame.from_dict([df_old]).append(pd.DataFrame.from_dict([df_new]))
+    df["type"] = ["old sim", "new sim"]
+    df = df.set_index("type")
+
+    print(df)
+
+    df.loc["old sim"] /= sum(df.loc["old sim"])
+    df.loc["new sim"] /= sum(df.loc["new sim"])
+
+    print(df)
+
+    df.plot(kind="bar", stacked=True, colormap="crest")
+
+    plt.figtext(0.23, 0.12, "69.83s\n44.37%", fontfamily="monospace", color="white")
+    plt.figtext(0.23, 0.45, "49.40s\n31.39%", fontfamily="monospace", color="white")
+    plt.figtext(0.23, 0.68, "37.93s\n24.10%", fontfamily="monospace", color="white")
+
+    plt.figtext(0.62, 0.12, "34.16s\n28.63%", fontfamily="monospace", color="white")
+    plt.figtext(0.62, 0.34, "47.06s\n39.43%", fontfamily="monospace", color="white")
+    plt.figtext(0.62, 0.63, "37.91s\n31.77%", fontfamily="monospace", color="white")
+
+    plt.show()
+
+
+"""
+69.832879  49.403128  37.933687
+34.163148  47.060397  37.910251
+0.443737  0.313921   0.241041
+0.001720     0.286270  0.394342   0.317668
+"""
 
 
 if __name__ == "__main__":
-    main_time()
+    #  main_time()
+    main_prop()
