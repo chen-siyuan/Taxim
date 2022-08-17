@@ -1,10 +1,9 @@
 from matplotlib import pyplot as plt
 import numpy as np
+import pandas as pd
 import seaborn as sns
 
 from evaluate import crop, fill
-
-import pandas as pd
 
 
 experiments = [
@@ -145,16 +144,11 @@ def main_prop():
         df_new["run NNLS"] += new[2] - new[1]
         df_new["propagate"] += new[3] - new[2]
 
-    df = pd.DataFrame.from_dict([df_old]).append(pd.DataFrame.from_dict([df_new]))
+    df = pd.concat([pd.DataFrame.from_dict([df_old]), pd.DataFrame.from_dict([df_new])])
     df["type"] = ["old sim", "new sim"]
     df = df.set_index("type")
-
-    print(df)
-
     df.loc["old sim"] /= sum(df.loc["old sim"])
     df.loc["new sim"] /= sum(df.loc["new sim"])
-
-    print(df)
 
     df.plot(kind="bar", stacked=True, colormap="crest")
 
@@ -169,14 +163,6 @@ def main_prop():
     plt.show()
 
 
-"""
-69.832879  49.403128  37.933687
-34.163148  47.060397  37.910251
-0.443737  0.313921   0.241041
-0.001720     0.286270  0.394342   0.317668
-"""
-
-
 if __name__ == "__main__":
-    #  main_time()
+    main_time()
     main_prop()
